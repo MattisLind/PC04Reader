@@ -7,3 +7,5 @@ The hardware consists of an Arduino Uno card, but I guess that any Arduino board
 
 There is a also software for the host to read in the information read by the arduino board.
 
+[Webpage](http://www.datormuseum.se/reading-paper-tapes)
+
