@@ -90,3 +90,8 @@ There is a also software for the host to read in the information read by the ard
 
 [Webpage](http://www.datormuseum.se/reading-paper-tapes)
 
+### Gerber files
+
+![PCB layout](http://i.imgur.com/TbeRUjJ.png "PCB layout")
+
+This is the layout I did fo this project. I added Gerber files to the repository.
