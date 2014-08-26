@@ -82,6 +82,14 @@ The original PC8E uses a M840 board to let the computer control the punch. This 
 
 ![Punch sync bias circuit](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/Sk%C3%A4rmavbild%202014-07-18%20kl.%2007.55.17.png "Title") 
 
+This is the current loop Rx circuit from the DEC DL11 Async card that is copied in this design:
+
+![Current Loop Rx Circuit](http://i.imgur.com/KvVhtoU.png "Current Loop Rx Circuit")
+
+And this is the Tx circuit of the DL11 card which I used as a template:
+
+![Current Loop Tx Circuit](http://i.imgur.com/tKE7BaE.png "Current Loop Tx Circuit")
+
 PC04 Reader is a utility program to read paper tapes on a DEC PC04 Paper tape reader.
 
 The hardware consists of an Arduino Uno card, but I guess that any Arduino board would work fine.
