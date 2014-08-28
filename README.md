@@ -103,3 +103,8 @@ There is a also software for the host to read in the information read by the ard
 ![PCB layout](http://i.imgur.com/TbeRUjJ.png "PCB layout")
 
 This is the layout I did fo this project. I added Gerber files to the repository.
+
+Circuit boards populated:
+
+![PCB layout](http://i.imgur.com/X3ZvkEL.png "Finished PCB Top")
+![PCB layout](http://i.imgur.com/Wc0AXZP.png "Finished PCB Bottom")
