@@ -108,3 +108,41 @@ Circuit boards populated:
 
 ![PCB layout](http://i.imgur.com/X3ZvkEL.png "Finished PCB Top")
 ![PCB layout](http://i.imgur.com/Wc0AXZP.png "Finished PCB Bottom")
+
+### Rework required
+
+Since it is reuired that the punch baud rate corresponds closely with the actual punch speed, it has to be around 500 bps correpsonding to a punch rate of 50 cps. If faster buffers will overflow. On the other hand it is necessary that the transmit speed is able to handle more than the read speed, 300 cps, thus more than 3000 bps. Maybe 4500 bps is a good choice. Thus this means that we need to handle split speed which is not supported by the Atmega1284p chip USART. But the Atmega 1284p has two USARTS built in. We can thus use one USART for tx and another USART for Rx. The USARTs are operating using different baud rates. Since pin 14 and 15 is used for USART0 and pin 16 and 17 for USART1 we need to do some rewiring. We keep pin 14 as the Rx signal for the punch and use pin 17 as the Tx signal for the reader. However pin 17 is used for the Reader Run signal from the interface. Thus this signal has to be input on pin 15.
+
+### Reader software
+
+The Reader Run signal is handled by a pin change interrupt handler that detects that this pin has changed. Then it sets the reader_run variable to 2.
+
+Reader 300 cps. I.e 300 steps per second. Timer driven, one interrupt each 1.667 milisecond
+Use timer 1 to control the stepper motor. 
+ 
+There need to be a slow turn on / turn off logic as well. The M940 module start
+at a 5 ms clock time and then ramps down to a 1.67 ms clock time. We will do 
+similar when starting and stopping. If reader_run or FEEDSWITCH signal the rampup variable is decremented (higher speed)
+If neither reader_run nor FEEDSWITCH is pressed the rampup variable is incremented until it reaches the MAX_RAMP value.
+
+As long as the rampup value is less than MAX_RAMP we will generated stepper motor pulses else we will stop
+
+The Power line is just to decrease the power to the motor when it is in a stopped
+state. Thus to let the motor become completely lose we need to switch all stepper
+signals to off. 
+
+Feed hole input generate an edge triggered interrupt. The ISR will the initiate a timer to 
+expire within 200 microseconds.
+ 
+The timer 2 200 microseconds timeout ISR will sample the eight holes data and put them into
+a buffer and signal a semafor to the mainloop that data is available. If reader_run is greater than 0 it will be decremented. Thus if there are no reader_run pulses we will decrease the speed of the reader until we stop.
+
+Mainloop waits for the data semaphore to be active and then send the byte received over USART1.
+
+### Punch software
+
+The mainloop receives a character on USART0 and puts it into a 8 k buffer. If buffer_full is set the received character is ignored. Incremenets the bufferIn index. If the bufferIn is greater than or equal to 8192 we wrap around to 0. If the bufferIn index is equal to bufferOut we have an overflow condition and then we set the flag buffer_full. 
+
+The punchInt interrupt routine reads one character from the buffer and increments the buffer_out index. If buffer_full is set it will be cleared. The byte is sent to the punch solenoids and the punch done signal is activated. TIMER3 is initailized to do a 10 ms timeout.
+
+The TIMER3 10 ms timeout will clear all signals to the punch soleniods.
