@@ -105,7 +105,7 @@ M044 solenoid driver
 
 ![M044 soleniod driver](http://i.imgur.com/RlRk2i8.png "M044 soleniod driver")
 
-The solenoid driver drive the punch solenoids when the inputs are high.  Thus to make sure taht no punch are active we need to pull down these inputs since the AtMega chip input floats to a high impedance state when configured as inputs which is the default at startup. A rework is required to add pull downs on all outputs.
+The solenoid driver drive the punch solenoids when the inputs are high.  Thus to make sure taht no punch are active we need to pull down these inputs since the AtMega chip input floats to a high impedance state when configured as inputs which is the default at startup. The M044 driver card uses SN7401 chip which need at most 1.6 mA out of the chip to detect a low level. High level on the other hand is detected if 40 uA is feed into the chip input. To make sure low is detected at startup of the AtMega chip a rework is required to add pull downs on all outputs. 560 ohm is selcted a pull down. A punch solenoid is activated for 10 ms so the average powerconsumption should be quite low anyhow.
 
 [Webpage](http://www.datormuseum.se/reading-paper-tapes)
 
