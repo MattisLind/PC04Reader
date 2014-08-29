@@ -96,6 +96,17 @@ The hardware consists of an Arduino Uno card, but I guess that any Arduino board
 
 There is a also software for the host to read in the information read by the arduino board.
 
+### PC04 
+
+
+![PC04 schematic](http://i.imgur.com/7pdr3M1.png "PC04 schematic")
+
+M044 solenoid driver
+
+![M044 soleniod driver](http://i.imgur.com/RlRk2i8.png "M044 soleniod driver")
+
+The solenoid driver drive the punch solenoids when the inputs are high.  Thus to make sure taht no punch are active we need to pull down these inputs since the AtMega chip input floats to a high impedance state when configured as inputs which is the default at startup. A rework is required to add pull downs on all outputs.
+
 [Webpage](http://www.datormuseum.se/reading-paper-tapes)
 
 ### Gerber files
@@ -111,11 +122,11 @@ Circuit boards populated:
 
 ### Rework required
 
-Since it is reuired that the punch baud rate corresponds closely with the actual punch speed, it has to be around 500 bps correpsonding to a punch rate of 50 cps. If faster buffers will overflow. On the other hand it is necessary that the transmit speed is able to handle more than the read speed, 300 cps, thus more than 3000 bps. Maybe 4500 bps is a good choice. Thus this means that we need to handle split speed which is not supported by the Atmega1284p chip USART. But the Atmega 1284p has two USARTS built in. We can thus use one USART for tx and another USART for Rx. The USARTs are operating using different baud rates. Since pin 14 and 15 is used for USART0 and pin 16 and 17 for USART1 we need to do some rewiring. We keep pin 14 as the Rx signal for the punch and use pin 17 as the Tx signal for the reader. However pin 17 is used for the Reader Run signal from the interface. Thus this signal has to be input on pin 15.
+Since it is reuired that the punch baud rate corresponds closely with the actual punch speed, it has to be around 500 bps correpsonding to a punch rate of 50 cps. If faster buffers will overflow. On the other hand it is necessary that the transmit speed is able to handle more than the read speed, 300 cps, thus more than 3000 bps. Maybe 4500 bps is a good choice. Thus this means that we need to handle split speed which is not supported by the Atmega1284p chip USART. But the Atmega 1284p has two USARTS built in. We can thus use one USART for tx and another USART for Rx. The USARTs are operating using different baud rates. Since pin 14 and 15 is used for USART0 and pin 16 and 17 for USART1 we need to do some rewiring. We keep pin 14 as the Rx signal for the punch and use pin 17 as the Tx signal for the reader. However pin 17 is used for the Reader Run signal from the interface. Thus this signal has to be input on pin 15. This signal is PCINT25
 
 ### Reader software
 
-The initialization code sets up the USART1 using serial1.begin() but then disbales the receiver so that can be used for a pin change interrupt.
+The initialization code sets up the USART1 using serial1.begin() but then disbales the receiver so that can be used for a pin change interrupt. Configure the PCINT25 to create change interrupt.
 
 The Reader Run signal is handled by a pin change interrupt handler that detects that this pin has changed. Then it sets the reader_run variable to 2.
 
