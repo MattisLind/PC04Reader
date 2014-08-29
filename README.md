@@ -115,6 +115,8 @@ Since it is reuired that the punch baud rate corresponds closely with the actual
 
 ### Reader software
 
+The initialization code sets up the USART1 using serial1.begin() but then disbales the receiver so that can be used for a pin change interrupt.
+
 The Reader Run signal is handled by a pin change interrupt handler that detects that this pin has changed. Then it sets the reader_run variable to 2.
 
 Reader 300 cps. I.e 300 steps per second. Timer driven, one interrupt each 1.667 milisecond
@@ -140,6 +142,7 @@ a buffer and signal a semafor to the mainloop that data is available. If reader_
 Mainloop waits for the data semaphore to be active and then send the byte received over USART1.
 
 ### Punch software
+
 
 The mainloop receives a character on USART0 and puts it into a 8 k buffer. If buffer_full is set the received character is ignored. Incremenets the bufferIn index. If the bufferIn is greater than or equal to 8192 we wrap around to 0. If the bufferIn index is equal to bufferOut we have an overflow condition and then we set the flag buffer_full. 
 
