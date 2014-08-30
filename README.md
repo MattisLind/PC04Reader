@@ -82,13 +82,7 @@ The original PC8E uses a M840 board to let the computer control the punch. This 
 
 ![Punch sync bias circuit](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/Sk%C3%A4rmavbild%202014-07-18%20kl.%2007.55.17.png "Title") 
 
-This is the current loop Rx circuit from the DEC DL11 Async card that is copied in this design:
 
-![Current Loop Rx Circuit](http://i.imgur.com/KvVhtoU.png "Current Loop Rx Circuit")
-
-And this is the Tx circuit of the DL11 card which I used as a template:
-
-![Current Loop Tx Circuit](http://i.imgur.com/tKE7BaE.png "Current Loop Tx Circuit")
 
 PC04 Reader is a utility program to read paper tapes on a DEC PC04 Paper tape reader.
 
@@ -108,6 +102,39 @@ M044 solenoid driver
 The solenoid driver drive the punch solenoids when the inputs are high.  Thus to make sure taht no punch are active we need to pull down these inputs since the AtMega chip input floats to a high impedance state when configured as inputs which is the default at startup. The M044 driver card uses SN7401 chip which need at most 1.6 mA out of the chip to detect a low level. High level on the other hand is detected if 40 uA is feed into the chip input. To make sure low is detected at startup of the AtMega chip a rework is required to add pull downs on all outputs. 560 ohm is selcted a pull down. A punch solenoid is activated for 10 ms so the average powerconsumption should be quite low anyhow.
 
 [Webpage](http://www.datormuseum.se/reading-paper-tapes)
+
+### DL11
+
+The [DL11](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DL11%20Asynchronous%20Line%20Interface%20Engineering%20Drawings.pdf) Asynchronous Line interface is implemented by DEC on a M7800 circuit board. It is using a standar UART circuit and a number of circuits nu adapt to the unibus and to both EIA RS-232 / CCITT V.28 levels and 20 mA current loop.
+
+The DL11 has a baud rate generator that can generate independet clock signals for the Rx and Tx section of the UART chip. 8 different buad rates are selectable using two rotary switches. The crystal to teh baud rate generator can be replaced. 
+
+![Baud rates](http://i.imgur.com/zpG0JzT.png "Baud rates")
+
+If we instead uss 1.92 MHz crystal we get this table:
+
+| Position | Factor | Baud Rate |
+|----------|--------|-----------|
+|    1     | 23040  |   83.33   |
+|    2     | 15360  |   125     |
+|    3     |  7680  |   250     |
+|    4     |  3840  |   500     |
+|    5     |  1920  |  1000     |
+|    6     |   960  |  2000     |
+|    7     |   640  |  3000     |
+|    8     |   480  |  4000     |
+
+Which should work fine setting Tx to position 4 and Rx to position 7.
+
+The Reader Run signal on the DL11 is used with 110 baud teletypes to engage the reader relay and feed it one step forward. The Teletype is connected over current loop which means that the Reader Run signal is only available on 20 mA current loop interface on the DL11.
+
+This is the current loop Rx circuit from the DEC DL11 Async card. The design is aimed to interface toeards this ciruit.
+
+![Current Loop Rx Circuit](http://i.imgur.com/KvVhtoU.png "Current Loop Rx Circuit")
+
+And this is the Tx circuit of the DL11 card.
+
+![Current Loop Tx Circuit](http://i.imgur.com/tKE7BaE.png "Current Loop Tx Circuit")
 
 ### Gerber files
 
