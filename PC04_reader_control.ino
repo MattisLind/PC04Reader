@@ -81,6 +81,7 @@ To use serial we need to use pin 4 and 10 for stepper rather than 0 and 1.
 #define STEPPER_B1      4
 #define STEPPER_POWER   5
 #define FEEDSWITCH      6
+#define PUNCH_FEED      7
 #define FEEDHOLE        2
 #define HOLE_1         24
 #define HOLE_2         25
@@ -99,6 +100,7 @@ To use serial we need to use pin 4 and 10 for stepper rather than 0 and 1.
 #define HOLE_6_SHIFT   5
 #define HOLE_7_SHIFT   6
 #define HOLE_8_SHIFT   7
+#define PUNCH_DONE     18
 #define MAX_RAMP       100
 #define RAMP_FACTOR    360
 #define READER_RUN     16
@@ -135,7 +137,7 @@ void setup ()
   pinMode(STEPPER_POWER, OUTPUT);
   pinMode(TEST_OUT, OUTPUT);
   // initialize timer1 
-  DDRA = 0xff;  // Port A is inputs
+  DDRA = 0x00;  // Port A is inputs
   pinMode(FEEDHOLE, INPUT);
   digitalWrite(FEEDHOLE, HIGH);    // Enable pullup resistor
 
@@ -158,10 +160,10 @@ void setup ()
   digitalWrite(STEPPER_POWER, ~STEPPER_ON);
 
   // Punch init
-  
+  pinMode(PUNCH_DONE, OUTPUT);
   attachInterrupt(0,punchInt,RISING);  // punch sync signal on ping 16 which is INT2 external interrupts
   PORTD = 0x00; // Low out disables drives. External pull downs are used as well.
-  DDRC = 0x00; // All PORTC as outputs;
+  DDRC = 0xff; // All PORTC as outputs;
   
   // Timer 3 init  
   TCCR3B |= (1<<CS31);   // prescaler set to divde by 8.
@@ -285,18 +287,25 @@ ISR (TIMER1_OVF_vect) {
    }
 }
 
-void punchInt () {  
-  PORTD = punchData;    // Output the byte from the buffer.
-  punchFlag=0;          // Clear the punch sempaphore
+void punchInt () { 
+  if (punchFlag) { 
+    PORTD = punchData;    // Output the byte from the buffer.
+    digitalWrite(PUNCH_DONE,1); // switch on feed hole and move forward solenoid
+    punchFlag=0;          // Clear the punch sempaphore
+  }
+  if (!digitalRead(PUNCH_FEED)) {
+    digitalWrite(PUNCH_DONE,1);
+  }
   TCNT3 = TIMER3_VALUE; // reset the timer value for the 10 ms timout
   TIMSK3 |= (1<<TOIE3); // enable timer 3 interrupts on overflow. 
 }
 
 // The TIMER 3 ISR that switches the punch solenoids off.
 ISR (TIMER3_OVF_vect) {
+  PORTD = 0x00;          // switch off solenoids
+  digitalWrite(PUNCH_DONE,0); // switch off feed hole and move forward solenoid
   TIMSK3 &= ~(1<<TOIE3); // Disable timer 3 interrupts
   EIMSK |= (1 << INT2);  // enable punch sync interrupts
-  PORTD = 0x00;          // switch off solenoids
 }
 
 
