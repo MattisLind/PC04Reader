@@ -11,27 +11,46 @@ Pin 4 is used to control the SD card
 
 To use serial we need to use pin 4 and 10 for stepper rather than 0 and 1.
   
-  Arduino pin      Use                      Direction     PC04 Reader Connector
-  ------------------------------------------------------------------------------
-  4                 Stepper Motor Coil A(0)     Out               P
-  10                Stepper Motor Coil A(1)     Out               R
-  2                 Stepper Motor Coil B(0)     Out               S
-  3                 Feed hole detector          In                N
+  Atmega1284 pin   Arduino Pin    Use                         Direction     PC04 Reader Connector
+  --------------------------------------------------------------------------------------------
+  1                 0             Stepper Motor Coil A(0)     Out               P
+  2                 1             Stepper Motor Coil A(1)     Out               R
+  4                 3             Stepper Motor Coil B(0)     Out               S
+  3                 2             Feed hole detector          In                N
 
-  5                 Stepper power enable        Out               U
-  6                 Feed switch                 In                V
-  7                 Stepper Motor Coil B(1)     Out               T
-  8                 Hole 1 detector             In                D
-  9                 Hole 2 detector             In                E
- A0                 Hole 3 detector             In                F 
- A1                 Hole 4 detector             In                H
- A2                 Hole 5 detector             In                J
- A3                 Hole 6 detector             In                K
- A4                 Hole 7 detector             In                L
- A5                 Hole 8 detector             In                M
+  6                 5             Stepper power enable        Out               U
+  7                 6             Feed switch                 In                V
+  5                 4             Stepper Motor Coil B(1)     Out               T
+ 40                24             Hole 1 detector             In                D
+ 39                25             Hole 2 detector             In                E
+ 38                26             Hole 3 detector             In                F 
+ 37                27             Hole 4 detector             In                H
+ 36                28             Hole 5 detector             In                J
+ 35                29             Hole 6 detector             In                K
+ 34                30             Hole 7 detector             In                L
+ 33                31             Hole 8 detector             In                M
  
-                    Ground                      GND               C
+                                  Ground                      GND               C
+                                  +5V                                           A
                     
+  Atmega1284 pin   Arduino pin      Use                      Direction     PC04 Punch Connector
+  ---------------------------------------------------------------------------------------------   
+  8                 7               Punch Feed Switch            In                A
+                                    GND                                            B
+ 16                10               Punch Sync                   In                C
+                                    GND                                            D
+ 18                12               Punch Done                   Out               E
+ 29                23               Hole 8 punch                 Out               H
+ 28                22               Hole 7 punch                 Out               J
+ 27                21               Hole 6 punch                 Out               K
+ 26                20               Hole 5 punch                 Out               L
+                                    Bias to punch sync coil      Out               M
+ 25                19               Hole 4 punch                 Out               N
+ 24                18               Hole 3 punch                 Out               P
+ 23                17               Hole 2 punch                 Out               R
+ 22                16               Hole 1 punch                 Out               S
+ 19                13               Out of tape                  In                T
+ 
  Reader 300 cps. I.e 300 steps per second. Timer driven, one interrupt each 1.667 milisecond
  Use timer 1 to control the stepper motor.
  
@@ -56,21 +75,21 @@ To use serial we need to use pin 4 and 10 for stepper rather than 0 and 1.
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-#define STEPPER_A0      4
-#define STEPPER_A1      10
-#define STEPPER_B0      2
-#define STEPPER_B1      7
+#define STEPPER_A0      0
+#define STEPPER_A1      1
+#define STEPPER_B0      3
+#define STEPPER_B1      4
 #define STEPPER_POWER   5
 #define FEEDSWITCH      6
-#define FEEDHOLE        3
-#define HOLE_1          8
-#define HOLE_2          9
-#define HOLE_3         A0
-#define HOLE_4         A1
-#define HOLE_5         A2
-#define HOLE_6         A3
-#define HOLE_7         A4
-#define HOLE_8         A5
+#define FEEDHOLE        2
+#define HOLE_1         24
+#define HOLE_2         25
+#define HOLE_3         26
+#define HOLE_4         27
+#define HOLE_5         28
+#define HOLE_6         29
+#define HOLE_7         30
+#define HOLE_8         31
 #define TEST_OUT       11
 #define HOLE_1_SHIFT   0
 #define HOLE_2_SHIFT   1
@@ -82,16 +101,32 @@ To use serial we need to use pin 4 and 10 for stepper rather than 0 and 1.
 #define HOLE_8_SHIFT   7
 #define MAX_RAMP       100
 #define RAMP_FACTOR    360
-
+#define READER_RUN     16
 #define TIMER1_VALUE  38869   // preload timer1 65536-16MHz/1/600Hz
+#define TIMER3_VALUE  45536   // preload timer3 65536-16MHz/8/100Hz)
 //#define TIMER1_VALUE  2
 
 #define TIMER2_VALUE  206    // 256 - 16000000/64*200E-6
 #define STEPPER_ON    1
+
+volatile int readerRunLastLevel;
+
 void setup ()
 {
   noInterrupts();           // disable all interrupts
-  Serial.begin (115200);
+  
+  // setup the two USARTs
+  Serial.begin (300); // Punch receive 300 bps,  transmit disabled
+  UCSR0B &= ~TXEN0;
+  Serial1.begin (4800);  // Reader transmit 4800 bps, serial receive disabled
+  UCSR1B &= ~RXEN1;
+
+  // Setup reader run input  
+  PCMSK3 |= (1<<PCINT25);
+  PCICR |= (1<<PCIE3);
+  readerRunLastLevel=digitalRead(READER_RUN);
+  
+  
   // Setup Stepper pins as output
   pinMode(STEPPER_A0, OUTPUT);
   pinMode(STEPPER_A1, OUTPUT);
@@ -100,15 +135,11 @@ void setup ()
   pinMode(STEPPER_POWER, OUTPUT);
   pinMode(TEST_OUT, OUTPUT);
   // initialize timer1 
-
+  DDRA = 0xff;  // Port A is inputs
   pinMode(FEEDHOLE, INPUT);
   digitalWrite(FEEDHOLE, HIGH);    // Enable pullup resistor
-  /*
-  EIMSK |= (1 << INT1);     // Enable external interrupt INT1
-  EICRA |= (1 << ISC11);    // Trigger INT1 on rising edge
-  EICRA |= (1 << ISC10);
-  */
-  attachInterrupt(1,extInt,RISING);
+
+  attachInterrupt(2,extInt,RISING);
   
   TCCR1A = 0;
   TCCR1B = 0;
@@ -123,29 +154,41 @@ void setup ()
   
   //TCCR2B |= (1 << CS10);    // clk / 64 prescaler
   //TCCR2B |= (1 << CS11);
-  TCCR2B |= (1 << CS12);
+  TCCR2B |= (1 << CS22);
   digitalWrite(STEPPER_POWER, ~STEPPER_ON);
 
+  // Punch init
+  
+  attachInterrupt(0,punchInt,RISING);  // punch sync signal on ping 16 which is INT2 external interrupts
+  PORTD = 0x00; // Low out disables drives. External pull downs are used as well.
+  DDRC = 0x00; // All PORTC as outputs;
+  
+  // Timer 3 init  
+  TCCR3B |= (1<<CS31);   // prescaler set to divde by 8.
+  
+  
   interrupts();             // enable all interrupts
 
 }
 
+/*#define BUF_SIZE 8192
+
+volatile char buf[BUF_SIZE];
+voltaile int bufIndexIn, bufIndexOut;
+volatile int bufferFull, bufferEmpty; */
+volatile int punchData;
+volatile int punchFlag;
 volatile int data;
 volatile int data_flag;
 volatile int overrun;
+volatile int reader_run = 0;
+
 // 200 micro second timeout interrupt 
 ISR(TIMER2_OVF_vect) {
   digitalWrite(TEST_OUT,0);
   TIMSK2 &= ~(1 << TOIE2);  // Single shot disable interrupt from timer 2
   EIMSK |= (1 << INT1);     // Re-enable external interrupt INT1
-  data = digitalRead(HOLE_1);
-  data |= (digitalRead(HOLE_2) << HOLE_2_SHIFT);
-  data |= (digitalRead(HOLE_3) << HOLE_8_SHIFT);
-  data |= (digitalRead(HOLE_4) << HOLE_7_SHIFT);
-  data |= (digitalRead(HOLE_5) << HOLE_6_SHIFT);
-  data |= (digitalRead(HOLE_6) << HOLE_5_SHIFT);
-  data |= (digitalRead(HOLE_7) << HOLE_4_SHIFT);
-  data |= (digitalRead(HOLE_8) << HOLE_3_SHIFT);
+  data = PORTA;
   if (data_flag) {
     // data_flag was not cleared by main loop. Overrun detected set overrun flag!
     overrun = 1;
@@ -153,9 +196,10 @@ ISR(TIMER2_OVF_vect) {
   else {
     data_flag = 1;
   }
+  if (reader_run) reader_run--;
 }
 
-volatile int reader_run = 0;
+
 volatile int rampup=MAX_RAMP;
 
 
@@ -163,7 +207,7 @@ volatile int rampup=MAX_RAMP;
 void extInt () {
   data_flag = 0;
   digitalWrite(TEST_OUT,1);
-  if (reader_run) { 
+  if (rampup < MAX_RAMP) { 
     TCNT2 = TIMER2_VALUE;      // Set Timer 2 to the 200 micro second timeout
     TIMSK2 |= (1 << TOIE2);    // now enable timer 2 interrupt
     EIMSK &= ~(1 << INT1);     // Disable external interrupt INT1 untill timeout has occured
@@ -172,15 +216,32 @@ void extInt () {
   }
 }
 
+
+// The Pin chnage interrupt that handles the READER RUN signaö from the interface.
+ISR (PCINT3_vect) {
+  int readerRunLevel = digitalRead(READER_RUN); 
+  if ((readerRunLevel != readerRunLastLevel) && readerRunLevel) {
+    // pin changed and it is high, set flag !
+    reader_run = 2;
+  }
+}
+
 int state;
 
 // Stepper motor interrupt routine. 300 Hz
 ISR (TIMER1_OVF_vect) {
    if (!digitalRead(FEEDSWITCH)||reader_run) {
-     digitalWrite(STEPPER_POWER, STEPPER_ON);
      if (rampup>0) rampup--;
      TCNT1 = TIMER1_VALUE-rampup*RAMP_FACTOR;            // preload timer
      //TCNT1 = TIMER1_VALUE;  
+   }
+   else {
+     if (rampup<MAX_RAMP) rampup++;
+     TCNT1 = TIMER1_VALUE-rampup*RAMP_FACTOR;            // preload timer
+     //TCNT1 = TIMER1_VALUE;  
+   }
+   if (rampup < MAX_RAMP) {
+     digitalWrite(STEPPER_POWER, STEPPER_ON);
      switch (state) {
        case 0:
          digitalWrite(STEPPER_A1, 0);
@@ -224,29 +285,34 @@ ISR (TIMER1_OVF_vect) {
    }
 }
 
+void punchInt () {  
+  PORTD = punchData;    // Output the byte from the buffer.
+  punchFlag=0;          // Clear the punch sempaphore
+  TCNT3 = TIMER3_VALUE; // reset the timer value for the 10 ms timout
+  TIMSK3 |= (1<<TOIE3); // enable timer 3 interrupts on overflow. 
+}
+
+// The TIMER 3 ISR that switches the punch solenoids off.
+ISR (TIMER3_OVF_vect) {
+  TIMSK3 &= ~(1<<TOIE3); // Disable timer 3 interrupts
+  EIMSK |= (1 << INT2);  // enable punch sync interrupts
+  PORTD = 0x00;          // switch off solenoids
+}
+
 
 void loop () {
   int ch;
   if (Serial.available()) {
     ch = Serial.read();
-    if (ch == 'R') { // If pressing R the reader will start
-       reader_run = 1;
-    }
-    if (ch == 'S') { // Pressing S will cause it to stop.
-       reader_run = 0;
-    }
-    
+    if (!punchFlag) {  // The one char buffer is already full. We haven't punched anything yet.
+      punchData = ch;
+      punchFlag = 1;
+    } 
   }
   if(data_flag) {
-    Serial.write(data);
+    Serial1.write(data);
     data_flag = 0;
   }
-  if (overrun) {    // If overrun occurs it will stop reading and print error message.
-    overrun=0;
-    reader_run = 0;
-    Serial.println("ERROR: OVERRUN OCCURED");
-  }
-  delay(1);
 }
 
 
