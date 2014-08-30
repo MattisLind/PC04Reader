@@ -1,9 +1,16 @@
 PC04 Reader / Punch control
 ==========
 
-This project has been extended to be able to both control the reader and punch of the DEC PC04. The plan is to manufacture a DEC dual card that inserts into the PC04 and provide a serial interface, both 20 mA current loop and RS-232 levels to both be able to interface with the standard DL11 and modernd DLV11-J.
+This project started by using a Arduino board to control the reader part of a PC04 paper tape reader . I  have made a small [webpage](http://www.datormuseum.se/reading-paper-tapes) on this.
+
+Now this project has been extended to be able to both control the reader and punch of the DEC PC04. The plan is to manufacture a DEC dual card that inserts into the PC04 and provide a serial interface, both 20 mA current loop and RS-232 levels to both be able to interface with the standard DL11 and modernd DLV11-J.
+
+The idea behind this came from the fact that the bootstrap for the high speed and low speed paper tape is the same. The only difference is the CSR used. Thus my idea is to emulate the PC11 using a DL11 card.
 
 The intreface is one rx signal for the punch section running at 500 bps and a tx signal which is running at 3000 bps. The DL11 has to be modified using a different crystal to support this. There is also a reader run signal that starts the reader. Reader run is a pulse that signals that one character is to be read.
+
+AtMega1284p
+-----------
 
 The intention is to use a AtMega1284p chip.
 
@@ -29,6 +36,26 @@ The intention is to use a AtMega1284p chip.
           PWM (D 13) PD5 19|        |22 PC0 (D 16) SCL
           PWM (D 14) PD6 20|        |21 PD7 (D 15) PWM
                            +--------+
+
+
+PC05 / PC11
+-----------
+
+This is the target emulation. This is the [PC11 Engieering Drawing](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC11_Engineering_Darwings.pdf) and this is the [PC11 manual](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC11_Reader-Punch_Manual.pdf).
+
+
+
+PC04 / PC8E
+-----------
+
+![PC04 schematic](http://i.imgur.com/7pdr3M1.png "PC04 schematic")
+
+M044 solenoid driver
+
+![M044 soleniod driver](http://i.imgur.com/RlRk2i8.png "M044 soleniod driver")
+
+The solenoid driver drive the punch solenoids when the inputs are high.  Thus to make sure taht no punch are active we need to pull down these inputs since the AtMega chip input floats to a high impedance state when configured as inputs which is the default at startup. The M044 driver card uses SN7401 chip which need at most 1.6 mA out of the chip to detect a low level. High level on the other hand is detected if 40 uA is feed into the chip input. To make sure low is detected at startup of the AtMega chip a rework is required to add pull downs on all outputs. 560 ohm is selcted a pull down. A punch solenoid is activated for 10 ms so the average powerconsumption should be quite low anyhow.
+
 
 
 The reader cable is connected as follows
@@ -90,22 +117,11 @@ The hardware consists of an Arduino Uno card, but I guess that any Arduino board
 
 There is a also software for the host to read in the information read by the arduino board.
 
-### PC04 
 
-
-![PC04 schematic](http://i.imgur.com/7pdr3M1.png "PC04 schematic")
-
-M044 solenoid driver
-
-![M044 soleniod driver](http://i.imgur.com/RlRk2i8.png "M044 soleniod driver")
-
-The solenoid driver drive the punch solenoids when the inputs are high.  Thus to make sure taht no punch are active we need to pull down these inputs since the AtMega chip input floats to a high impedance state when configured as inputs which is the default at startup. The M044 driver card uses SN7401 chip which need at most 1.6 mA out of the chip to detect a low level. High level on the other hand is detected if 40 uA is feed into the chip input. To make sure low is detected at startup of the AtMega chip a rework is required to add pull downs on all outputs. 560 ohm is selcted a pull down. A punch solenoid is activated for 10 ms so the average powerconsumption should be quite low anyhow.
-
-[Webpage](http://www.datormuseum.se/reading-paper-tapes)
 
 ### DL11
 
-The [DL11](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DL11%20Asynchronous%20Line%20Interface%20Engineering%20Drawings.pdf) Asynchronous Line interface is implemented by DEC on a M7800 circuit board. It is using a standar UART circuit and a number of circuits nu adapt to the unibus and to both EIA RS-232 / CCITT V.28 levels and 20 mA current loop.
+The [DL11](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DL11%20Asynchronous%20Line%20Interface%20Engineering%20Drawings.pdf) Asynchronous Line interface is implemented by DEC on a M7800 circuit board. It is using a standar UART circuit and a number of circuits nu adapt to the unibus and to both EIA RS-232 / CCITT V.28 levels and 20 mA current loop. [DL11 manual](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DEC-11-HDLAA-B-D%20DL11%20Asynchronous%20Line%20Interface%20Manual.pdf).
 
 The DL11 has a baud rate generator that can generate independet clock signals for the Rx and Tx section of the UART chip. 8 different buad rates are selectable using two rotary switches. The crystal to teh baud rate generator can be replaced. 
 
@@ -139,6 +155,25 @@ Since this Rx circuit is aimed for 110 bps mechanincal relay switching it has to
 And this is the Tx circuit of the DL11 card.
 
 ![Current Loop Tx Circuit](http://i.imgur.com/tKE7BaE.png "Current Loop Tx Circuit")
+
+PC11 vs DL11
+------------
+
+![PC11 Reader status register](http://i.imgur.com/rmqksxn.png)
+
+PC11 Reader status register
+
+![DL11 Receive status register](http://i.imgur.com/vYxBq08.png)
+
+DL11 Receive status register
+
+![PC11 Punch status register](http://i.imgur.com/MWCWT3o.png)
+
+PC11 Punch status register
+
+![DL11 Transmit status register](http://i.imgur.com/bBcbV9f.png)
+
+DL11 Transmit status register
 
 ### Gerber files
 
