@@ -175,6 +175,8 @@ PC11 Punch status register
 
 DL11 Transmit status register
 
+The difference is as far as I can see that the PC11 can signal errors in th high bit of the status registers. This means that for example out of tape in the punch would not be detected by the software.
+
 ### Gerber files
 
 ![PCB layout](http://i.imgur.com/TbeRUjJ.png "PCB layout")
