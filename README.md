@@ -128,7 +128,8 @@ Which should work fine setting Tx to position 4 and Rx to position 7.
 
 The Reader Run signal on the DL11 is used with 110 baud teletypes to engage the reader relay and feed it one step forward. The Teletype is connected over current loop which means that the Reader Run signal is only available on 20 mA current loop interface on the DL11.
 
-This is the current loop Rx circuit from the DEC DL11 Async card. The design is aimed to interface toeards this ciruit.
+This is the current loop Rx circuit from the DEC DL11 Async card. The design is aimed to interface towards this ciruit.
+Since this Rx circuit is aimed for 110 bps mechanincal relay switching it has to be modified when running at 3000 bps. All the capacitors has to be removed so that the signals is not low pass filtered to much.
 
 ![Current Loop Rx Circuit](http://i.imgur.com/KvVhtoU.png "Current Loop Rx Circuit")
 
