@@ -1,11 +1,11 @@
 PC04 Reader / Punch control
 ==========
 
-This project started by using a Arduino board to control the reader part of a PC04 paper tape reader . I  have made a small [webpage](http://www.datormuseum.se/reading-paper-tapes) on this.
+This project started by using a Arduino board to control the reader part of a PC04 paper tape reader . I have made a small [webpage](http://www.datormuseum.se/reading-paper-tapes) on this.
 
 Now this project has been extended to be able to both control the reader and punch of the DEC PC04. The idea behind this came from the fact that the bootstrap for the high speed and low speed paper tape is the same. The only difference is the CSR used. Thus my idea is to emulate the PC11 using a DL11 card. Another reason is that I have several PC04 but no PC05. Neither do I have any M7810 boards. 
 
-The plan is to manufacture a DEC dual card that inserts into the PC04 and provide a serial interface, both 20 mA current loop and RS-232 levels to both be able to interface with the standard DL11 and modernd DLV11-J.
+The plan is to manufacture a DEC dual card that inserts into the PC04 and provide a serial interface, both 20 mA current loop and RS-232 levels to both be able to interface with the standard DL11 or any other DEC DL card that has the reader enable signal.
 
 The interface is one rx signal for the punch section running at 500 bps and a tx signal which is running at 3000 bps. The DL11 has to be modified using a different crystal to support this. There is also a reader run signal that starts the reader. Reader run is a pulse that signals that one character is to be read.
 
@@ -41,14 +41,16 @@ The intention is to use a AtMega1284p chip.
 PC05 / PC11
 -----------
 
-This is the target emulation. This is the [PC11 Engieering Drawing](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC11_Engineering_Darwings.pdf) and this is the [PC11 manual](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC11_Reader-Punch_Manual.pdf).
+This is the target emulation. This is the [PC11 Engieering Drawing](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC11_Engineering_Darwings.pdf) and this is the [PC11 manual](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC11_Reader-Punch_Manual.pdf). The interface card is the M7810 board which is a very simple unibus interface. The PC05 on the other hand compared with the PC04 include all logic to control the reader and punch. The small backplane in the PC04 has been expanded in the PC05 to twelve slots and three cards is loctated here: M7050, M710 and M715. One interesting note is that the PDP-8/I and PDP-8/L (and I assume also PDP-12 and PDP-15) uses these cards as well, but located in the CPU. (Well not M7050, but M705). This means that the interface the PC05 reader a device address and three IOP signals, IOP1, IOP2 and IOP4. For the reader the IOP1 is used to test the reader flag. IOP2 is used to transfer data from the reader to host and IOP4 is to initiate reading of the next character. For the punch IOP1 is used test the punch done flag, IOP2 to clear the punch done flag and IOP4 to move a byte from host to punch.
+
+For the reader part writing bit 0 of the Reader CSR register will trigger the IOP4 pulse of the reader in the M7050, initiating a read cycle. 
 
 
 
 PC04 / PC8E
 -----------
 
-This section describe some fact about the PC04 / PC8E combination.
+This section describe some fact about the PC04 / PC8E combination. The interface card used in the PDP-8/E computer is the M840. The M840 combines all logic found on the M705(0), M710, M715 into one board and add omnibus interfacing. Thus the PC04 is a rather dumb device that rely on the controller do everything, including generating the stepper motor pulses for the stepper.
 
 ![PC04 schematic](http://i.imgur.com/7pdr3M1.png "PC04 schematic")
 
@@ -56,29 +58,20 @@ M044 solenoid driver
 
 ![M044 soleniod driver](http://i.imgur.com/RlRk2i8.png "M044 soleniod driver")
 
-The solenoid driver drive the punch solenoids when the inputs are high.  Thus to make sure taht no punch are active we need to pull down these inputs since the AtMega chip input floats to a high impedance state when configured as inputs which is the default at startup. The M044 driver card uses SN7401 chip which need at most 1.6 mA out of the chip to detect a low level. High level on the other hand is detected if 40 uA is feed into the chip input. To make sure low is detected at startup of the AtMega chip a rework is required to add pull downs on all outputs. 560 ohm is selcted a pull down. A punch solenoid is activated for 10 ms so the average powerconsumption should be quite low anyhow.
-
+The solenoid driver drive the punch solenoids when the inputs are high.  Thus to make sure that no punch are active we need to pull down these inputs since the AtMega chip input floats to a high impedance state when configured as inputs which is the default at startup. The M044 driver card uses SN7401 chip which need at most 1.6 mA out of the chip to detect a low level. High level on the other hand is detected if 40 uA is feed into the chip input. To make sure low is detected at startup of the AtMega chip a rework is required to add pull downs on all outputs. 560 ohm is selcted a pull down. A punch solenoid is activated for half of the time and not all whole are punched all the time so the average powerconsumption should be quite low anyhow. 
 
 
 The original PC8E uses a M840 board to let the computer control the punch. This uses this circuit to bias the punch sync coil in the punch.
 
 ![Punch sync bias circuit](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/Sk%C3%A4rmavbild%202014-07-18%20kl.%2007.55.17.png "Title") 
 
-
-
-PC04 Reader is a utility program to read paper tapes on a DEC PC04 Paper tape reader.
-
-The hardware consists of an Arduino Uno card, but I guess that any Arduino board would work fine.
-
-There is a also software for the host to read in the information read by the arduino board.
-
-
+This ciruit is incorporated in the new design.
 
 ### DL11
 
-The [DL11](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DL11%20Asynchronous%20Line%20Interface%20Engineering%20Drawings.pdf) Asynchronous Line interface is implemented by DEC on a M7800 circuit board. It is using a standar UART circuit and a number of circuits nu adapt to the unibus and to both EIA RS-232 / CCITT V.28 levels and 20 mA current loop. [DL11 manual](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DEC-11-HDLAA-B-D%20DL11%20Asynchronous%20Line%20Interface%20Manual.pdf).
+The [DL11](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DL11%20Asynchronous%20Line%20Interface%20Engineering%20Drawings.pdf) Asynchronous Line interface is implemented by DEC on a M7800 circuit board. It is using a standard UART circuit and a number of circuits nu adapt to the unibus and to both EIA RS-232 / CCITT V.28 levels and 20 mA current loop. [DL11 manual](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DEC-11-HDLAA-B-D%20DL11%20Asynchronous%20Line%20Interface%20Manual.pdf).
 
-The DL11 has a baud rate generator that can generate independet clock signals for the Rx and Tx section of the UART chip. 8 different buad rates are selectable using two rotary switches. The crystal to teh baud rate generator can be replaced. 
+The DL11 has a baud rate generator that can generate independet clock signals for the Rx and Tx section of the UART chip. 8 different buad rates are selectable using two rotary switches. The crystal to the baud rate generator can be replaced. 
 
 ![Baud rates](http://i.imgur.com/zpG0JzT.png "Baud rates")
 
@@ -130,7 +123,9 @@ PC11 Punch status register
 
 DL11 Transmit status register
 
-The difference is as far as I can see that the PC11 can signal errors in th high bit of the status registers. This means that for example out of tape in the punch would not be detected by the software.
+The difference is as far as I can see that the PC11 can signal errors in th high bit of the status registers. This means that for example out of tape in the punch would not be detected by the software. From a programming point of view the behavior of the reader enable is identical in the PC11 and the DL11. In the PC11 a pulse is generated when writing a 1 that trigger the reading dirctly, in the DL11 a flip flop is set when writing a 1 that is cleared by the receiver busy signal, thus when something is being received.
+
+Aside from the Error indication the hypothesis is that system software would think that a DL11 at CSR 176550 is a in fact a PC11 device!
 
 Implementation
 --------------
@@ -232,6 +227,10 @@ Mainloop waits for the data semaphore to be active and then send the byte receiv
 
 The mainloop receives a character on USART0 and puts it into a 8 k buffer. If buffer_full is set the received character is ignored. Incremenets the bufferIn index. If the bufferIn is greater than or equal to 8192 we wrap around to 0. If the bufferIn index is equal to bufferOut we have an overflow condition and then we set the flag buffer_full. 
 
-The punchInt interrupt routine reads one character from the buffer and increments the buffer_out index. If buffer_full is set it will be cleared. The byte is sent to the punch solenoids and the punch done signal is activated. TIMER3 is initailized to do a 10 ms timeout.
+The punchInt interrupt routine reads the buffered data and write it to the punch solenoids and the punch done signal is activated. TIMER3 is initailized to do a 10 ms timeout.
 
 The TIMER3 10 ms timeout will clear all signals to the punch soleniods.
+
+#### Main loop
+
+The main loop will only do forwarding of data from and to the serial ports.
