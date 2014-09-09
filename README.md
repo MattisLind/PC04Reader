@@ -67,6 +67,9 @@ The original PC8E uses a M840 board to let the computer control the punch. This 
 
 This ciruit is incorporated in the new design.
 
+![Test Punch sync bias](http://imgur.com/4ZvZMHd "Title")
+
+Test of the punch sync signal conditioning circuit.
 ### DL11
 
 The [DL11](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DL11%20Asynchronous%20Line%20Interface%20Engineering%20Drawings.pdf) Asynchronous Line interface is implemented by DEC on a M7800 circuit board. It is using a standard UART circuit and a number of circuits nu adapt to the unibus and to both EIA RS-232 / CCITT V.28 levels and 20 mA current loop. [DL11 manual](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DEC-11-HDLAA-B-D%20DL11%20Asynchronous%20Line%20Interface%20Manual.pdf).
