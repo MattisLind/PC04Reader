@@ -4,12 +4,6 @@ PC04 paper tape reader program for Arduino
 
 Mattis Lind 
 
-Ardruino Uno PINs.
-
-Pins 10,11,12,13 is reserved for the Ethernet shield
-Pin 4 is used to control the SD card
-
-To use serial we need to use pin 4 and 10 for stepper rather than 0 and 1.
   
   Atmega1284 pin   Arduino Pin    Use                         Direction     PC04 Reader Connector
   --------------------------------------------------------------------------------------------
@@ -68,8 +62,16 @@ To use serial we need to use pin 4 and 10 for stepper rather than 0 and 1.
  The timer 2 200 microseconds timeout ISR will sample the eight holes data and put them into
  a buffer and signal a semafor to the mainloop that data is available.
 
- Mainloop waits for the semaphore to be active and then reformats the data into hexadecimal 
- and transmits it over serial line. 
+ Mainloop waits for the semaphore to be active and transmits it over serial line. 
+ 
+ The main loop checks if a character is available, it then reads it into a buffer and set the punch flag.
+ 
+ The punch sync signal trigger an interrupt on the rising edge. If the punch flag is set in the interrupt routine
+ it will output the data from the punch buffer and reset the pucn flag. It will also set the punch done signal
+ which will punch the feed hole and forward the tape one step. 
+ 
+ Then it will arm a single shot time out to interrupt after 10 ms. This interrupt routine will switch off all
+ punch drivers and reinitate the external interrupt.
 
 */
 #include <avr/io.h>
@@ -83,24 +85,8 @@ To use serial we need to use pin 4 and 10 for stepper rather than 0 and 1.
 #define FEEDSWITCH      6
 #define PUNCH_FEED      7
 #define FEEDHOLE        2
-#define HOLE_1         24
-#define HOLE_2         25
-#define HOLE_3         26
-#define HOLE_4         27
-#define HOLE_5         28
-#define HOLE_6         29
-#define HOLE_7         30
-#define HOLE_8         31
 #define TEST_OUT       11
-#define HOLE_1_SHIFT   0
-#define HOLE_2_SHIFT   1
-#define HOLE_3_SHIFT   2
-#define HOLE_4_SHIFT   3
-#define HOLE_5_SHIFT   4
-#define HOLE_6_SHIFT   5
-#define HOLE_7_SHIFT   6
-#define HOLE_8_SHIFT   7
-#define PUNCH_DONE     18
+#define PUNCH_DONE     12
 #define MAX_RAMP       100
 #define RAMP_FACTOR    360
 #define READER_RUN     16
@@ -136,13 +122,13 @@ void setup ()
   pinMode(STEPPER_B1, OUTPUT);
   pinMode(STEPPER_POWER, OUTPUT);
   pinMode(TEST_OUT, OUTPUT);
-  // initialize timer1 
+  
   DDRA = 0x00;  // Port A is inputs
   pinMode(FEEDHOLE, INPUT);
   digitalWrite(FEEDHOLE, HIGH);    // Enable pullup resistor
-
   attachInterrupt(2,extInt,RISING);
   
+  // initialize timer1
   TCCR1A = 0;
   TCCR1B = 0;
   TCCR2A = 0;
@@ -150,24 +136,21 @@ void setup ()
 
   TCNT1 = TIMER1_VALUE;            
   TCCR1B |= (1 << CS10);    // no prescaler 
-  //TCCR1B |= (1 << CS11);
-  //TCCR1B |= (1 << CS12);
   TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
   
-  //TCCR2B |= (1 << CS10);    // clk / 64 prescaler
-  //TCCR2B |= (1 << CS11);
   TCCR2B |= (1 << CS22);
   digitalWrite(STEPPER_POWER, ~STEPPER_ON);
 
   // Punch init
   pinMode(PUNCH_DONE, OUTPUT);
-  attachInterrupt(0,punchInt,RISING);  // punch sync signal on ping 16 which is INT2 external interrupts
-  PORTD = 0x00; // Low out disables drives. External pull downs are used as well.
+  attachInterrupt(0,punchInt,RISING);  // punch sync signal on pin 16 which is INT0 external interrupts
+  PORTC = 0x00; // Low out disables drivers. External pull downs are used as well.
   DDRC = 0xff; // All PORTC as outputs;
+  
+  pinMode(PUNCH_DONE, OUTPUT);
   
   // Timer 3 init  
   TCCR3B |= (1<<CS31);   // prescaler set to divde by 8.
-  
   
   interrupts();             // enable all interrupts
 
@@ -191,11 +174,7 @@ ISR(TIMER2_OVF_vect) {
   TIMSK2 &= ~(1 << TOIE2);  // Single shot disable interrupt from timer 2
   EIMSK |= (1 << INT1);     // Re-enable external interrupt INT1
   data = PORTA;
-  if (data_flag) {
-    // data_flag was not cleared by main loop. Overrun detected set overrun flag!
-    overrun = 1;
-  } 
-  else {
+  if (!data_flag && (reader_run == 2)) {
     data_flag = 1;
   }
   if (reader_run) reader_run--;
@@ -213,13 +192,12 @@ void extInt () {
     TCNT2 = TIMER2_VALUE;      // Set Timer 2 to the 200 micro second timeout
     TIMSK2 |= (1 << TOIE2);    // now enable timer 2 interrupt
     EIMSK &= ~(1 << INT1);     // Disable external interrupt INT1 untill timeout has occured
-                            // filtering out spurious interrupts
-    
+                               // filtering out spurious interrupts    
   }
 }
 
 
-// The Pin chnage interrupt that handles the READER RUN signaö from the interface.
+// The Pin change interrupt that handles the READER RUN signal from the interface.
 ISR (PCINT3_vect) {
   int readerRunLevel = digitalRead(READER_RUN); 
   if ((readerRunLevel != readerRunLastLevel) && readerRunLevel) {
@@ -234,13 +212,11 @@ int state;
 ISR (TIMER1_OVF_vect) {
    if (!digitalRead(FEEDSWITCH)||reader_run) {
      if (rampup>0) rampup--;
-     TCNT1 = TIMER1_VALUE-rampup*RAMP_FACTOR;            // preload timer
-     //TCNT1 = TIMER1_VALUE;  
+     TCNT1 = TIMER1_VALUE-rampup*RAMP_FACTOR;            // preload timer 
    }
    else {
      if (rampup<MAX_RAMP) rampup++;
-     TCNT1 = TIMER1_VALUE-rampup*RAMP_FACTOR;            // preload timer
-     //TCNT1 = TIMER1_VALUE;  
+     TCNT1 = TIMER1_VALUE-rampup*RAMP_FACTOR;            // preload timer 
    }
    if (rampup < MAX_RAMP) {
      digitalWrite(STEPPER_POWER, STEPPER_ON);
