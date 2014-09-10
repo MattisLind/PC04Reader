@@ -85,11 +85,11 @@ Mattis Lind
 #define FEEDSWITCH      6
 #define PUNCH_FEED      7
 #define FEEDHOLE        2
-#define TEST_OUT       11
+#define TEST_OUT       15
 #define PUNCH_DONE     12
 #define MAX_RAMP       100
 #define RAMP_FACTOR    360
-#define READER_RUN     16
+#define READER_RUN     14
 #define TIMER1_VALUE  38869   // preload timer1 65536-16MHz/1/600Hz
 #define TIMER3_VALUE  45536   // preload timer3 65536-16MHz/8/100Hz)
 //#define TIMER1_VALUE  2
@@ -110,7 +110,7 @@ void setup ()
   UCSR1B &= ~RXEN1;
 
   // Setup reader run input  
-  PCMSK3 |= (1<<PCINT25);
+  PCMSK3 |= (1<<PCINT30);
   PCICR |= (1<<PCIE3);
   readerRunLastLevel=digitalRead(READER_RUN);
   
@@ -287,12 +287,10 @@ ISR (TIMER3_OVF_vect) {
 
 void loop () {
   int ch;
-  if (Serial.available()) {
-    ch = Serial.read();
-    if (!punchFlag) {  // The one char buffer is already full. We haven't punched anything yet.
-      punchData = ch;
-      punchFlag = 1;
-    } 
+  if (Serial.available() && !punchFlag) {
+    ch = Serial.read();  
+    punchData = ch;
+    punchFlag = 1; 
   }
   if(data_flag) {
     Serial1.write(data);
