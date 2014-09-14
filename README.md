@@ -107,6 +107,27 @@ And this is the Tx circuit of the DL11 card.
 
 ![Current Loop Tx Circuit](http://i.imgur.com/tKE7BaE.png "Current Loop Tx Circuit")
 
+DLV11J
+------
+
+The DLV11J card (M8043) has foour serial ports. Using an external adapter it is possible to connect the DLV11J to current loop devices. The DLV11J has circuitry to create the reader pulse which is output on the interface as a TTL level signal.
+
+Thus it would be possible to use the DLV11J signal dirctly by removing the resistor in the READER RUN current loop signal.
+
+| DLV11J pin | Function | 
+|------------|----------|
+|     1      |  NOT USED     |
+|     2      |  GND     |
+|     3      |  TX     |
+|     4      |  READER RUN |
+|     5      |  GND     |
+|     6      |  KEY     |
+|     7      |  GND     |
+|     8      |  RX      |
+|     9      |  GND     |
+|    10      |  NOT USED  | 
+
+
 PC11 vs DL11
 ------------
 
