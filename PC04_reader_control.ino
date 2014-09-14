@@ -104,10 +104,10 @@ void setup ()
   noInterrupts();           // disable all interrupts
   
   // setup the two USARTs
-  Serial.begin (300); // Punch receive 300 bps,  transmit disabled
-  UCSR0B &= ~TXEN0;
-  Serial1.begin (4800);  // Reader transmit 4800 bps, serial receive disabled
-  UCSR1B &= ~RXEN1;
+  Serial.begin (19200); // Punch receive 300 bps,  transmit disabled
+  UCSR0B &= ~(1<<TXEN0);
+  Serial1.begin (19200);  // Reader transmit 4800 bps, serial receive disabled
+  UCSR1B &= ~(1<<RXEN1);
 
   // Setup reader run input  
   PCMSK3 |= (1<<PCINT30);
@@ -135,10 +135,11 @@ void setup ()
   TCCR2B = 0;
 
   TCNT1 = TIMER1_VALUE;            
-  TCCR1B |= (1 << CS10);    // no prescaler 
+  TCCR1B |= (1 << CS10);    // no prescaler
+  //TCCR1B &= ~(1 << CS11);
+  //TCCR1B &= ~(1 << CS12); 
   TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
-  
-  TCCR2B |= (1 << CS22);
+  TCCR2B |= (1 << CS22);    // divide by 64 prescaler
   digitalWrite(STEPPER_POWER, ~STEPPER_ON);
 
   // Punch init
@@ -148,10 +149,18 @@ void setup ()
   DDRC = 0xff; // All PORTC as outputs;
   
   pinMode(PUNCH_DONE, OUTPUT);
-  
+  pinMode(PUNCH_FEED, INPUT);
+  digitalWrite(PUNCH_FEED, HIGH);    // Enable pullup resistor  
   // Timer 3 init  
-  TCCR3B |= (1<<CS31);   // prescaler set to divde by 8.
+  TCCR3A = 0;
+  TCCR3B = (1<<CS31);   // prescaler set to divde by 8.
+  TCCR3C = 0;
+  TIMSK3 = 0;
+  TIFR3 = 0;
   
+  // init the test output
+  pinMode(TEST_OUT, OUTPUT);
+  PORTD &= 0x7f;
   interrupts();             // enable all interrupts
 
 }
@@ -162,22 +171,24 @@ volatile char buf[BUF_SIZE];
 voltaile int bufIndexIn, bufIndexOut;
 volatile int bufferFull, bufferEmpty; */
 volatile int punchData;
-volatile int punchFlag;
+volatile int punchFlag=0;
 volatile int data;
 volatile int data_flag;
 volatile int overrun;
 volatile int reader_run = 0;
+volatile int notempty = 0;
 
 // 200 micro second timeout interrupt 
 ISR(TIMER2_OVF_vect) {
   digitalWrite(TEST_OUT,0);
   TIMSK2 &= ~(1 << TOIE2);  // Single shot disable interrupt from timer 2
-  EIMSK |= (1 << INT1);     // Re-enable external interrupt INT1
+  EIMSK |= (1 << INT2);     // Re-enable external interrupt INT2
   data = PORTA;
   if (!data_flag && (reader_run == 2)) {
     data_flag = 1;
   }
   if (reader_run) reader_run--;
+  notempty=10;
 }
 
 
@@ -191,7 +202,7 @@ void extInt () {
   if (rampup < MAX_RAMP) { 
     TCNT2 = TIMER2_VALUE;      // Set Timer 2 to the 200 micro second timeout
     TIMSK2 |= (1 << TOIE2);    // now enable timer 2 interrupt
-    EIMSK &= ~(1 << INT1);     // Disable external interrupt INT1 untill timeout has occured
+    EIMSK &= ~(1 << INT2);     // Disable external interrupt INT2 untill timeout has occured
                                // filtering out spurious interrupts    
   }
 }
@@ -199,10 +210,14 @@ void extInt () {
 
 // The Pin change interrupt that handles the READER RUN signal from the interface.
 ISR (PCINT3_vect) {
-  int readerRunLevel = digitalRead(READER_RUN); 
-  if ((readerRunLevel != readerRunLastLevel) && readerRunLevel) {
+  int readerRunLevel = digitalRead(READER_RUN);  
+  if (readerRunLevel != readerRunLastLevel) {
+    if (readerRunLevel) {
     // pin changed and it is high, set flag !
-    reader_run = 2;
+      reader_run = 2;
+      notempty = 10;
+    }
+    readerRunLastLevel = readerRunLevel;
   }
 }
 
@@ -210,7 +225,7 @@ int state;
 
 // Stepper motor interrupt routine. 300 Hz
 ISR (TIMER1_OVF_vect) {
-   if (!digitalRead(FEEDSWITCH)||reader_run) {
+   if (!digitalRead(FEEDSWITCH)||(reader_run&&notempty)) {
      if (rampup>0) rampup--;
      TCNT1 = TIMER1_VALUE-rampup*RAMP_FACTOR;            // preload timer 
    }
@@ -250,6 +265,7 @@ ISR (TIMER1_OVF_vect) {
          state = 0;
          break;         
      }
+     if (notempty>0) notempty--;
    }
    else {
      digitalWrite(STEPPER_POWER, !STEPPER_ON);
@@ -258,14 +274,14 @@ ISR (TIMER1_OVF_vect) {
      digitalWrite(STEPPER_B0, 1);
      digitalWrite(STEPPER_B1, 1);
      digitalWrite(STEPPER_A1, 1);
-     state=0;
-     
+     state=0;    
    }
 }
 
 void punchInt () { 
+  
   if (punchFlag) { 
-    PORTD = punchData;    // Output the byte from the buffer.
+    PORTC = punchData;    // Output the byte from the buffer.
     digitalWrite(PUNCH_DONE,1); // switch on feed hole and move forward solenoid
     punchFlag=0;          // Clear the punch sempaphore
   }
@@ -273,15 +289,16 @@ void punchInt () {
     digitalWrite(PUNCH_DONE,1);
   }
   TCNT3 = TIMER3_VALUE; // reset the timer value for the 10 ms timout
-  TIMSK3 |= (1<<TOIE3); // enable timer 3 interrupts on overflow. 
+  TIMSK3 |= (1<<TOIE3); // enable timer 3 interrupts on overflow.
+  EIMSK &= (1<< INT0) ; // disable punchInt
 }
 
 // The TIMER 3 ISR that switches the punch solenoids off.
 ISR (TIMER3_OVF_vect) {
-  PORTD = 0x00;          // switch off solenoids
+  PORTC = 0x00;          // switch off solenoids
   digitalWrite(PUNCH_DONE,0); // switch off feed hole and move forward solenoid
   TIMSK3 &= ~(1<<TOIE3); // Disable timer 3 interrupts
-  EIMSK |= (1 << INT2);  // enable punch sync interrupts
+  EIMSK |= (1 << INT0);  // enable punch sync interrupts
 }
 
 
@@ -294,6 +311,8 @@ void loop () {
   }
   if(data_flag) {
     Serial1.write(data);
+    //Serial1.print(data, HEX);
+    //Serial.println();
     data_flag = 0;
   }
 }
