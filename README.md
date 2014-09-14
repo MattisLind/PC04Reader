@@ -195,7 +195,7 @@ Circuit boards populated:
 
 #### Rework required
 
-Since it is reuired that the punch baud rate corresponds closely with the actual punch speed, it has to be around 500 bps correpsonding to a punch rate of 50 cps. If faster buffers will overflow. On the other hand it is necessary that the transmit speed is able to handle more than the read speed, 300 cps, thus more than 3000 bps. Maybe 4500 bps is a good choice. Thus this means that we need to handle split speed which is not supported by the Atmega1284p chip USART. But the Atmega 1284p has two USARTS built in. We can thus use one USART for tx and another USART for Rx. The USARTs are operating using different baud rates. Since pin 14 and 15 is used for USART0 and pin 16 and 17 for USART1 we need to do some rewiring. We keep pin 14 as the Rx signal for the punch and use pin 17 as the Tx signal for the reader. However pin 17 is used for the Reader Run signal from the interface. Thus this signal has to be input on pin 15. This signal is PCINT25
+Since it is reuired that the punch baud rate corresponds closely with the actual punch speed, it has to be around 500 bps correpsonding to a punch rate of 50 cps. If faster buffers will overflow. On the other hand it is necessary that the transmit speed is able to handle more than the read speed, 300 cps, thus more than 3000 bps. Maybe 4500 bps is a good choice. Thus this means that we need to handle split speed which is not supported by the Atmega1284p chip USART. But the Atmega 1284p has two USARTS built in. We can thus use one USART for tx and another USART for Rx. The USARTs are operating using different baud rates. Since pin 14 and 15 is used for USART0 and pin 16 and 17 for USART1 we need to do some rewiring. We keep pin 14 as the Rx signal for the punch and use pin 17 as the Tx signal for the reader. However pin 17 is used for the Reader Run signal from the interface. Thus this signal has to be input on pin 20 which is unused. This signal is PCINT30
 
 #### Reader software
 
@@ -228,7 +228,7 @@ Mainloop waits for the data semaphore to be active and then send the byte receiv
 #### Punch software
 
 
-The mainloop receives a character on USART0 and puts it into a 8 k buffer. If buffer_full is set the received character is ignored. Incremenets the bufferIn index. If the bufferIn is greater than or equal to 8192 we wrap around to 0. If the bufferIn index is equal to bufferOut we have an overflow condition and then we set the flag buffer_full. 
+The mainloop will check if the punch is done and that if there is a character available in the input queue it will read the character. Thus it will use the built in buffering routines in the serial library 
 
 The punchInt interrupt routine reads the buffered data and write it to the punch solenoids and the punch done signal is activated. TIMER3 is initailized to do a 10 ms timeout.
 
