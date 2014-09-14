@@ -165,11 +165,6 @@ void setup ()
 
 }
 
-/*#define BUF_SIZE 8192
-
-volatile char buf[BUF_SIZE];
-voltaile int bufIndexIn, bufIndexOut;
-volatile int bufferFull, bufferEmpty; */
 volatile int punchData;
 volatile int punchFlag=0;
 volatile int data;
