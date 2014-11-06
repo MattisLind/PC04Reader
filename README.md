@@ -83,18 +83,18 @@ The problem is that the speed of the punch is dependent on line frequency and th
 
 
 
-| Divisor | 844.8 kHz      | 1032.96 kHz     | 1.152MHz | 4.608MHz | 11.52MHz | 7.68MHz     | 3.84MHz     | 1.92MHz     | 8MHz     | 3.93216MHz     | 2MHz     |
-|---------|-------------|-------------|---------|---------|----------|-------------|-------------|-------------|-------------|-------------|-------------|
-| 23040   | 36,66666667 | 44,83333333 | 50      | 200     | 500      | 333,3333333 | 166,6666667 | 83,33333333 | 347,2222222 | 170,6666667 | 86,80555556 |
-| 15360   | 55          | 67,25       | 75      | 300     | 750      | 500         | 250         | 125         | 520,8333333 | 256         | 130,2083333 |
-| 7680    | 110         | 134,5       | 150     | 600     | 1500     | 1000        | 500         | 250         | 1041,666667 | 512         | 260,4166667 |
-| 3840    | 220         | 269         | 300     | 1200    | 3000     | 2000        | 1000        | 500         | 2083,333333 | 1024        | 520,8333333 |
-| 1920    | 440         | 538         | 600     | 2400    | 6000     | 4000        | 2000        | 1000        | 4166,666667 | 2048        | 1041,666667 |
-| 960     | 880         | 1076        | 1200    | 4800    | 12000    | 8000        | 4000        | 2000        | 8333,333333 | 4096        | 2083,333333 |
-| 640     | 1320        | 1614        | 1800    | 7200    | 18000    | 12000       | 6000        | 3000        | 12500       | 6144        | 3125        |
-| 480     | 1760        | 2152        | 2400    | 9600    | 24000    | 16000       | 8000        | 4000        | 16666,66667 | 8192        | 4166,666667 |
+| Divisor | 844.8 kHz | 1032.96 kHz     | 1.152MHz | 4.608MHz | 4.2MHz | 11.52MHz | 7.68MHz     | 3.84MHz     | 1.92MHz     | 8MHz     | 3.93216MHz     | 2MHz     |
+|---------|-------------|-------------|---------|---------|--------|----------|-------------|-------------|-------------|-------------|-------------|-------------|
+| 23040   | 36,66666667 | 44,83333333 | 50      | 200     | 182,3      | 500      | 333,3333333 | 166,6666667 | 83,33333333 | 347,2222222 | 170,6666667 | 86,80555556 |
+| 15360   | 55          | 67,25       | 75      | 300     | 273.4      | 750      | 500         | 250         | 125         | 520,8333333 | 256         | 130,2083333 |
+| 7680    | 110         | 134,5       | 150     | 600     | 546,9      | 1500     | 1000        | 500         | 250         | 1041,666667 | 512         | 260,4166667 |
+| 3840    | 220         | 269         | 300     | 1200    | 1093,8      |3000     | 2000        | 1000        | 500         | 2083,333333 | 1024        | 520,8333333 |
+| 1920    | 440         | 538         | 600     | 2400    | 2187,5      |6000     | 4000        | 2000        | 1000        | 4166,666667 | 2048        | 1041,666667 |
+| 960     | 880         | 1076        | 1200    | 4800    | 4375      | 12000    | 8000        | 4000        | 2000        | 8333,333333 | 4096        | 2083,333333 |
+| 640     | 1320        | 1614        | 1800    | 7200    | 6562,5      |18000    | 12000       | 6000        | 3000        | 12500       | 6144        | 3125        |
+| 480     | 1760        | 2152        | 2400    | 9600    | 8750      | 24000    | 16000       | 8000        | 4000        | 16666,66667 | 8192        | 4166,666667 |
 
-The four first columns are the original crystals as per the DL11 engineering drawings. Then there are a number of columns for recommended crystals that would give a 500 cps rate. The problem, though is that 1.92MHz and 3.84MHz doesn't seem to be standard crystals. 7.68MHz and 11.52 Mhz jsut might be to high for the DL11 baud rate geberator circuit. This need to be tested. Then there are three columns with crystals that generate cps rates that are slightly higher than 50 cps. 512 bps givs a 2.4% higher rate. If the buffer is 8192 bytes it will take 241333 bytes until there will be a buffer overflow in the punch software.
+The four first columns are the original crystals as per the DL11 engineering drawings. Then there are a number of columns for recommended crystals that would give a 500 cps rate. The problem, though is that 1.92MHz and 3.84MHz doesn't seem to be standard crystals. 7.68MHz and 11.52 Mhz just might be to high for the DL11 baud rate geberator circuit. This need to be tested. Then there are three columns with crystals that generate cps rates that are slightly higher than 50 cps. 512 bps givs a 2.4% higher rate. If the buffer is 8192 bytes it will take 241333 bytes until there will be a buffer overflow in the punch software. Since the actual speed of the punch is not 50 cps but 54.6 cps a 4.2 MHz crystal which is available from Mouser would be a good alternative. This will cause very little buffering in the punch part of the card.
 
 The Reader Run signal on the DL11 is used with 110 baud teletypes to engage the reader relay and feed it one step forward. The Teletype is connected over current loop which means that the Reader Run signal is only available on 20 mA current loop interface on the DL11.
 
@@ -106,6 +106,27 @@ Since this Rx circuit is aimed for 110 bps mechanincal relay switching it has to
 And this is the Tx circuit of the DL11 card.
 
 ![Current Loop Tx Circuit](http://i.imgur.com/tKE7BaE.png "Current Loop Tx Circuit")
+
+DLV11J
+------
+
+The DLV11J card (M8043) has foour serial ports. Using an external adapter it is possible to connect the DLV11J to current loop devices. The DLV11J has circuitry to create the reader pulse which is output on the interface as a TTL level signal.
+
+Thus it would be possible to use the DLV11J signal dirctly by removing the resistor in the READER RUN current loop signal.
+
+| DLV11J pin | Function | 
+|------------|----------|
+|     1      |  NOT USED     |
+|     2      |  GND     |
+|     3      |  TX     |
+|     4      |  READER RUN |
+|     5      |  GND     |
+|     6      |  KEY     |
+|     7      |  GND     |
+|     8      |  RX      |
+|     9      |  GND     |
+|    10      |  NOT USED  | 
+
 
 PC11 vs DL11
 ------------
