@@ -96,7 +96,8 @@ Mattis Lind
 
 #define TIMER2_VALUE  206    // 256 - 16000000/64*200E-6
 #define STEPPER_ON    1
-
+#define PUNCHDEBUG 0
+#define READERDEBUG  0
 volatile int readerRunLastLevel;
 
 void setup ()
@@ -104,7 +105,7 @@ void setup ()
   noInterrupts();           // disable all interrupts
   
   // setup the two USARTs
-  Serial.begin (19200); // Punch receive 300 bps,  transmit disabled
+  Serial.begin (300); // Punch receive 300 bps,  transmit disabled
   UCSR0B &= ~(1<<TXEN0);
   Serial1.begin (19200);  // Reader transmit 4800 bps, serial receive disabled
   UCSR1B &= ~(1<<RXEN1);
@@ -121,8 +122,6 @@ void setup ()
   pinMode(STEPPER_B0, OUTPUT);
   pinMode(STEPPER_B1, OUTPUT);
   pinMode(STEPPER_POWER, OUTPUT);
-  pinMode(TEST_OUT, OUTPUT);
-  
   DDRA = 0x00;  // Port A is inputs
   pinMode(FEEDHOLE, INPUT);
   digitalWrite(FEEDHOLE, HIGH);    // Enable pullup resistor
@@ -135,9 +134,7 @@ void setup ()
   TCCR2B = 0;
 
   TCNT1 = TIMER1_VALUE;            
-  TCCR1B |= (1 << CS10);    // no prescaler
-  //TCCR1B &= ~(1 << CS11);
-  //TCCR1B &= ~(1 << CS12); 
+  TCCR1B |= (1 << CS10);    // no prescaler 
   TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
   TCCR2B |= (1 << CS22);    // divide by 64 prescaler
   digitalWrite(STEPPER_POWER, ~STEPPER_ON);
@@ -157,10 +154,6 @@ void setup ()
   TCCR3C = 0;
   TIMSK3 = 0;
   TIFR3 = 0;
-  
-  // init the test output
-  pinMode(TEST_OUT, OUTPUT);
-  PORTD &= 0x7f;
   interrupts();             // enable all interrupts
 
 }
@@ -168,19 +161,18 @@ void setup ()
 volatile int punchData;
 volatile int punchFlag=0;
 volatile int data;
-volatile int data_flag;
 volatile int overrun;
 volatile int reader_run = 0;
 volatile int notempty = 0;
+volatile int read_flag = 0;
 
 // 200 micro second timeout interrupt 
 ISR(TIMER2_OVF_vect) {
-  digitalWrite(TEST_OUT,0);
   TIMSK2 &= ~(1 << TOIE2);  // Single shot disable interrupt from timer 2
   EIMSK |= (1 << INT2);     // Re-enable external interrupt INT2
-  data = PORTA;
-  if (!data_flag && (reader_run == 2)) {
-    data_flag = 1;
+  if (read_flag) {
+    read_flag--;
+    Serial1.write(PINA);
   }
   if (reader_run) reader_run--;
   notempty=10;
@@ -192,8 +184,6 @@ volatile int rampup=MAX_RAMP;
 
 // Edge triggered feed hole interrupt routine
 void extInt () {
-  data_flag = 0;
-  digitalWrite(TEST_OUT,1);
   if (rampup < MAX_RAMP) { 
     TCNT2 = TIMER2_VALUE;      // Set Timer 2 to the 200 micro second timeout
     TIMSK2 |= (1 << TOIE2);    // now enable timer 2 interrupt
@@ -206,14 +196,11 @@ void extInt () {
 // The Pin change interrupt that handles the READER RUN signal from the interface.
 ISR (PCINT3_vect) {
   int readerRunLevel = digitalRead(READER_RUN);  
-  if (readerRunLevel != readerRunLastLevel) {
     if (readerRunLevel) {
-    // pin changed and it is high, set flag !
-      reader_run = 2;
+      read_flag++;
+      reader_run = 4;
       notempty = 10;
     }
-    readerRunLastLevel = readerRunLevel;
-  }
 }
 
 int state;
@@ -273,8 +260,7 @@ ISR (TIMER1_OVF_vect) {
    }
 }
 
-void punchInt () { 
-  
+void punchInt () {   
   if (punchFlag) { 
     PORTC = punchData;    // Output the byte from the buffer.
     digitalWrite(PUNCH_DONE,1); // switch on feed hole and move forward solenoid
@@ -303,12 +289,6 @@ void loop () {
     ch = Serial.read();  
     punchData = ch;
     punchFlag = 1; 
-  }
-  if(data_flag) {
-    Serial1.write(data);
-    //Serial1.print(data, HEX);
-    //Serial.println();
-    data_flag = 0;
   }
 }
 
