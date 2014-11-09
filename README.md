@@ -218,6 +218,26 @@ Circuit boards populated:
 
 Since it is reuired that the punch baud rate corresponds closely with the actual punch speed, it has to be around 500 bps correpsonding to a punch rate of 50 cps. If faster buffers will overflow. On the other hand it is necessary that the transmit speed is able to handle more than the read speed, 300 cps, thus more than 3000 bps. Maybe 4500 bps is a good choice. Thus this means that we need to handle split speed which is not supported by the Atmega1284p chip USART. But the Atmega 1284p has two USARTS built in. We can thus use one USART for tx and another USART for Rx. The USARTs are operating using different baud rates. Since pin 14 and 15 is used for USART0 and pin 16 and 17 for USART1 we need to do some rewiring. We keep pin 14 as the Rx signal for the punch and use pin 17 as the Tx signal for the reader. However pin 17 is used for the Reader Run signal from the interface. Thus this signal has to be input on pin 20 which is unused. This signal is PCINT30
 
+![Top side with reworks](http://i.imgur.com/nR6pEld.png "Top side with reworks")
+
+Details shown below:
+![Detail of top side](http://i.imgur.com/TnXaJmh.png "Detail of top side")
+
+1. Do not cut wire at pin 15.
+2. Cut wire at pin 17 and wire it to pin 11 of MAX3232.
+3. Add a wire from pin 20 to the trace that was cut off above.
+
+![Detail of top side](http://i.imgur.com/voyaFq7.png "Detail of top side")
+
+1. Cut off wire going to D6 and D7.
+2. Run wire from D6 and D7 to pin 11 of MAX3232.
+
+![Bottom side with reworks](http://i.imgur.com/nOEWdYs.png "Bottom side with reworks")
+
+1. Add 1k pull down resistors from pin 22-29 and pin 18 of CPU chip.
+2. Cut off trace at pin 11 of MAX3232.
+
+
 #### Reader software
 
 The initialization code sets up the USART1 using serial1.begin() but then disbales the receiver so that can be used for a pin change interrupt. Configure the PCINT25 to create change interrupt.
