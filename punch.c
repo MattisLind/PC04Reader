@@ -12,7 +12,7 @@ int serialport_init(const char* serialport, int baud)
   int fd;
     
   //fd = open(serialport, O_RDWR | O_NOCTTY | O_NDELAY);
-  fd = open(serialport, O_RDWR | O_NONBLOCK);
+  fd = open(serialport, O_RDWR| O_NONBLOCK);
     
   if (fd == -1)  {
     perror("serialport_init: Unable to open port ");
@@ -29,6 +29,7 @@ int serialport_init(const char* serialport, int baud)
   }
   speed_t brate = baud; // let you override switch below if needed
   switch(baud) {
+  case  300:   brate=B300; break;
   case  600:   brate=B600; break;
   case 4800:   brate=B4800;   break;
   case 9600:   brate=B9600;   break;
@@ -89,7 +90,7 @@ int main (int argc, char *argv[])
     exit(1);
   }
   fprintf (stderr, "serieport: %s fil: %s\n", argv[1], argv[2]); 
-  serfd = serialport_init(argv[1], 600);
+  serfd = serialport_init(argv[1], 300);
   if (serfd==-1) {
     fprintf (stderr, "Failed to open serial port: %s\n", argv[1] );
     exit(0);
@@ -100,13 +101,15 @@ int main (int argc, char *argv[])
   fprintf (stderr, "Opened serial port OK\n");
   filefd = open (argv[2], O_RDWR, 0666);
   if (filefd==-1) {
-    fprintf (stderr, "Failed to open destination file: %s\n", argv[2] );
+    fprintf (stderr, "Failed to open source file: %s\n", argv[2] );
     exit(0);
   }
   fprintf (stderr, "Opened file OK\n");
-  while ((ret = read (filefd,&ch, 1)) == 1) { 
+  while ((ret = read (filefd,&ch, 1)) == 1) {
+    fprintf(stderr, "Wrote %02X \n", ch);
       write (serfd, &ch, 1);
   };
+  tcdrain(serfd);
   close(serfd);
   close(filefd);
 }

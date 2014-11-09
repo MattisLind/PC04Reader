@@ -10,10 +10,8 @@ int serialport_init(const char* serialport, int baud)
 {
   struct termios toptions;
   int fd;
-    
-  //fd = open(serialport, O_RDWR | O_NOCTTY | O_NDELAY);
-  fd = open(serialport, O_RDWR | O_NONBLOCK);
-    
+  fd = open(serialport, O_RDWR | O_NOCTTY | O_NDELAY);
+  //fd = open(serialport, O_RDWR | O_NONBLOCK);
   if (fd == -1)  {
     perror("serialport_init: Unable to open port ");
     return -1;
@@ -102,7 +100,7 @@ int setDTR(int fd, unsigned short level)
 
 int main (int argc, char *argv[])
 {
-  int serfd, filefd, ret, reading=50;
+  int serfd, filefd, ret, reading=350;
   unsigned char data;
   char * cmd;
   char b[1];  // read expects an array, so we give it a 1-byte array
@@ -111,19 +109,19 @@ int main (int argc, char *argv[])
   int preamble=1;
 
   if (argc!=3) {
-    fprintf(stderr, "wrong number of arguments");
+    fprintf(stderr, "wrong number of arguments. Usage CMD <serialport> <filename>\n");
     exit(1);
   }
   fprintf (stderr, "serieport: %s fil: %s\n", argv[1], argv[2]); 
-  serfd = serialport_init(argv[1], 4800);
+  serfd = serialport_init(argv[1], 19200);
   if (serfd==-1) {
     fprintf (stderr, "Failed to open serial port: %s\n", argv[1] );
     exit(0);
   }
-  sleep(4);
+  sleep(1);
   tcflush(serfd, TCIOFLUSH);
-  sleep(4);
-  fprintf (stderr, "Opened serial port OK\n");
+  sleep(1);
+  //fprintf (stderr, "Opened serial port OK\n");
   filefd = open (argv[2], O_RDWR | O_CREAT | O_TRUNC, 0666);
   if (filefd==-1) {
     fprintf (stderr, "Failed to open destination file: %s\n", argv[2] );
@@ -132,8 +130,8 @@ int main (int argc, char *argv[])
   setDTR(serfd, 0);
   usleep(10000);
   timeout=50;
-  //tcflush(serfd, TCIOFLUSH);
-  fprintf (stderr, "Wrote start reader command command\n");
+  tcflush(serfd, TCIOFLUSH);
+  //fprintf (stderr, "Wrote start reader command command\n");
   setDTR(serfd, 1);
   usleep(1);
   setDTR(serfd, 0);
@@ -153,9 +151,7 @@ int main (int argc, char *argv[])
     usleep(1);
     setDTR(serfd, 0);
     timeout=50;
-#ifdef SERIALPORTDEBUG  
-    printf("serialport_read_until: i=%d, n=%d b='%c'\n",i,n,b[0]); // debug
-#endif
+    //printf("serialport_read_until: i=%d, n=%d b='%c'\n",i,n,b[0]); // debug
     ret = write (filefd, b, 1);
     if (ret !=1) {
       fprintf (stderr, "Failed to write one byte to file\n");
@@ -167,13 +163,13 @@ int main (int argc, char *argv[])
     }
     else {
       preamble=0;
-      reading=50;
+      reading=350;
     }
 
   } while( (reading>0||preamble) && timeout>0 );
 
   //tcflush(serfd, TCIOFLUSH);
-  fprintf (stderr, "Wrote stop reader command\n");
+  //fprintf (stderr, "Wrote stop reader command\n");
   close(serfd);
   close(filefd);
 }
