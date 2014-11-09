@@ -198,7 +198,7 @@ ISR (PCINT3_vect) {
   int readerRunLevel = digitalRead(READER_RUN);  
     if (readerRunLevel) {
       read_flag++;
-      reader_run = 4;
+      reader_run = 2;
       notempty = 10;
     }
 }
