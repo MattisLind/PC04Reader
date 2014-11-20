@@ -237,6 +237,44 @@ Details shown below:
 1. Add 1k pull down resistors from pin 22-29 and pin 18 of CPU chip.
 2. Cut off trace at pin 11 of MAX3232.
 
+#### Component list
+
+The layout has several faults. Most notably the silkscreen has numbers of defects. Missing component designators etc.
+
+|ID|Component| 
+|-----------|-----------|
+|  U3       | AtMega1284P|
+|  U4       | MAXIM MAX3232CPE |
+|  U5,U7,U8 | BC557 |
+|  R1       | 100 |
+|  R2       | 3.3k |
+|  R3       | 100 |
+|  R4       | 5.6k |
+|  R5       | 220  |
+|  R6       | 3.3k |
+|  R7       | 120  |
+|  R8       | 1k  |
+|  R9       | 1k  |
+|  R10      | 680 |
+|  R11      | 330 |
+|  R12      | 330 |
+|  R13      | 1k  |
+|  C4       | 100n |
+|  C10      | 33u Tantalum |
+|  C crystal | 22p ceramic |
+|  C other   | 10n ceramic |
+|  Y1        | 16M Crystal |
+| D1         | 5 mm LED |
+| D2,D3,D4,D5,D6,D7 | IN4148 |
+| J1,J2,J3,J4,J5 | pin header |
+
+#### Burning bootloader
+
+I used another Arduino board wich I connect to J2 to download the bootloader. Basically I use the instructions from this [blogpost](http://maniacbug.wordpress.com/2011/11/27/arduino-on-atmega1284p-4/). The pinout of J2 is the same as the pinout of J2 in the blog post.
+
+#### Download software
+
+Be sure to download all 1284 libraries from the link above. Then attach the serial device to J1. The pinout is the same as JP1 in the blog post above.
 
 #### Reader software
 
