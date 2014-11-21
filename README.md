@@ -268,9 +268,33 @@ The layout has several faults. Most notably the silkscreen has numbers of defect
 | D2,D3,D4,D5,D6,D7 | IN4148 |
 | J1,J2,J3,J4,J5 | pin header |
 
-#### Jumpers
+#### Jumpers and connectors
 
 There are two jumpers that control what is connected to the Reader Run input and the Rx input of the microcontroller. Generally either the inputs come from the current loop interface or the MAX3232 converter. For Rx the middle pin is also connected to the software download connector. 
+
+The pinout of the J1 connector from left to right, top view.
+
+|Pin|Function|
+|-----|----------|
+|  1  | DTR/RESET|
+|  2  |   RXI    |
+|  3  |   TXO    |
+|  4  |   VCC    |
+|  5  |   GND    |
+|  6  |   GND    |
+
+The pinout of the J2 connector from left to right, top view.
+
+| Pin | Function | Arduino pin |
+|-----|----------|-------------|
+|  1  |   VCC    |   VCC       |
+|  2  |   GND    |   GND       |
+|  3  |   RESET  | PIN10       |
+|  4  |   MOSI   |    PIN11    |
+|  5  |   MISO   |    PIN12    |
+|  6  |   SCK    |    PIN13    |
+
+Arduino pin indicate the pin on the Arduino board to connect to when programming the boot loader.
 
 #### Burning bootloader
 
