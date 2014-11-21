@@ -268,13 +268,17 @@ The layout has several faults. Most notably the silkscreen has numbers of defect
 | D2,D3,D4,D5,D6,D7 | IN4148 |
 | J1,J2,J3,J4,J5 | pin header |
 
+#### Jumpers
+
+There are two jumpers that control what is connected to the Reader Run input and the Rx input of the microcontroller. Generally either the inputs come from the current loop interface or the MAX3232 converter. For Rx the middle pin is also connected to the software download connector. 
+
 #### Burning bootloader
 
 I used another Arduino board wich I connect to J2 to download the bootloader. Basically I use the instructions from this [blogpost](http://maniacbug.wordpress.com/2011/11/27/arduino-on-atmega1284p-4/). The pinout of J2 is the same as the pinout of J2 in the blog post.
 
 #### Download software
 
-Be sure to download all 1284 libraries from the link above. Then attach the serial device to J1. The pinout is the same as JP1 in the blog post above.
+Be sure to download all 1284 libraries from the link above. Then attach the serial device to J1. The pinout is the same as JP1 in the blog post above. Make sure that the jumper closest to the CPU is removed while trying to brogram, otherwise the Rx signals will collide and the chip won't download.
 
 #### Reader software
 
