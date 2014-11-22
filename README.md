@@ -245,7 +245,7 @@ The layout has several faults. Most notably the silkscreen has numbers of defect
 |-----------|-----------|
 |  U3       | AtMega1284P|
 |  U4       | MAXIM MAX3232CPE |
-|  U5,U7,U8 | BC557 |
+|  U5,U7,U8 | BC307 |
 |  R1       | 100 |
 |  R2       | 3.3k |
 |  R3       | 100 |
