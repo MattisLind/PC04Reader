@@ -237,6 +237,10 @@ Details shown below:
 1. Add 1k pull down resistors from pin 22-29 and pin 18 of CPU chip.
 2. Cut off trace at pin 11 of MAX3232.
 
+Pin 4 of J5 need to be connected to the bottom layer ground plane.
+
+The current loop interface (J4) is wrongly designed and need rework to work correctly.
+
 #### Component list
 
 The layout has several faults. Most notably the silkscreen has numbers of defects. Missing component designators etc.
@@ -293,6 +297,15 @@ The pinout of the J2 connector from left to right, top view.
 |  4  |   MOSI   |    PIN11    |
 |  5  |   MISO   |    PIN12    |
 |  6  |   SCK    |    PIN13    |
+
+The pinout of the J5 connector. Pin 1 is the top most pin.
+
+| Pin | Function | RS232 9 pin DSUB |
+|-----|----------|-------------|
+|  1  |   DTR    |     4       |
+|  2  |   RXD    |     3       |
+|  3  |   TXD    |     2       |
+|  4  |   GND    |     5       |
 
 Arduino pin indicate the pin on the Arduino board to connect to when programming the boot loader.
 
