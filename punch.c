@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
-
+#include <errno.h>
 
 
 int serialport_init(const char* serialport, int baud)
@@ -105,9 +105,16 @@ int main (int argc, char *argv[])
     exit(0);
   }
   fprintf (stderr, "Opened file OK\n");
-  while ((ret = read (filefd,&ch, 1)) == 1) {
+  while (read (filefd,&ch, 1) == 1) {
     fprintf(stderr, "Wrote %02X \n", ch);
-      write (serfd, &ch, 1);
+    do {
+      ret=write (serfd, &ch, 1);
+      if ((ret==-1) && (errno!=EAGAIN)) {
+	perror("Failed");
+	exit(0);
+      }
+      usleep(100000);
+    } while ((ret==-1) && (errno==EAGAIN)) 
   };
   tcdrain(serfd);
   close(serfd);
