@@ -109,11 +109,13 @@ int main (int argc, char *argv[])
     fprintf(stderr, "Wrote %02X \n", ch);
     do {
       ret=write (serfd, &ch, 1);
-      if ((ret==-1) && (errno!=EAGAIN)) {
-	perror("Failed");
-	exit(0);
+      if (ret==-1) {
+	if (errno!=EAGAIN) {
+	  perror("Failed");
+	  exit(0);
+	}
+	usleep(100000);
       }
-      usleep(100000);
     } while ((ret==-1) && (errno==EAGAIN)); 
   };
   tcdrain(serfd);
