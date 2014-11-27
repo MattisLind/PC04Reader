@@ -114,7 +114,7 @@ int main (int argc, char *argv[])
 	exit(0);
       }
       usleep(100000);
-    } while ((ret==-1) && (errno==EAGAIN)) 
+    } while ((ret==-1) && (errno==EAGAIN)); 
   };
   tcdrain(serfd);
   close(serfd);
