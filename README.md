@@ -240,6 +240,16 @@ Details shown below:
 Pin 4 of J5 need to be connected to the bottom layer ground plane.
 
 The current loop interface (J4) is wrongly designed and need rework to work correctly.
+When testing the current loop interface it appeared that the design was seriously flawed. I tried to interface the boaard with a DLV-11F board (M8027). Looking at the schmetics for the DLV11-F showed that the current loop interface can be either active or passive. Active means that the board is supplying the line current while passive is a consumer. The revised the design makes use of the Passive transmitters and receivers using opto couplers on the DLV11-F board. However, Reader Run signal needto be active on the DLV11-F card. So we need to insert an opto coupler on the PC04 controller board. 
+
+A number of cuts and jumpers had to be added as well as an extra 4N37 opto coupler to get it working. In the process of getting it to work there were certain emount of experimentation which lead to some unnecessary cuts done. Please note that only those marked need be cut. There are one wire that is not needed if one of those cuts aren't done.
+
+![Top layer current loop reworks](http://i.imgur.com/JSQdU1X.jpg "Top layer current loop reworks")
+
+![Bottom layer current loop reworks](http://i.imgur.com/NPIjn1B.jpg "Bottom layer current loop reworks")
+
+With all these modifications it was possible to load and run the paper tape BASIC on a LSI-11/03 computer wita a DLV11-F board. The board was setup for address 177550 and vector 70. The speed was set to split speed 300/19200. It was also possible toi punch the resulting BASIC program to tape using the SAVE program.
+
 
 #### Component list
 
@@ -249,7 +259,8 @@ The layout has several faults. Most notably the silkscreen has numbers of defect
 |-----------|-----------|
 |  U3       | AtMega1284P|
 |  U4       | MAXIM MAX3232CPE |
-|  U5,U7,U8 | BC307 |
+|  U5,U7,U8 | BC549B |
+|  U7,U8    | BC307 |
 |  R1       | 100 |
 |  R2       | 3.3k |
 |  R3       | 100 |
