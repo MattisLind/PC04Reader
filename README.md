@@ -250,6 +250,9 @@ A number of cuts and jumpers had to be added as well as an extra 4N37 opto coupl
 
 With all these modifications it was possible to load and run the paper tape BASIC on a LSI-11/03 computer wita a DLV11-F board. The board was setup for address 177550 and vector 70. The speed was set to split speed 300/19200. It was also possible toi punch the resulting BASIC program to tape using the SAVE program.
 
+#### Modifying the backplane
+
+The PC04 need a small modifcation to support this card. The +5V power line at A pin in the top-most connector of the backplane need to be connected to the connector for the interface card so the card have a power supply.
 
 #### Component list
 
