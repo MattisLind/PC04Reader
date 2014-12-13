@@ -271,7 +271,7 @@ void punchInt () {
   }
   TCNT3 = TIMER3_VALUE; // reset the timer value for the 10 ms timout
   TIMSK3 |= (1<<TOIE3); // enable timer 3 interrupts on overflow.
-  EIMSK &= (1<< INT0) ; // disable punchInt
+  EIMSK &= ~(1<< INT0) ; // disable punchInt
 }
 
 // The TIMER 3 ISR that switches the punch solenoids off.
