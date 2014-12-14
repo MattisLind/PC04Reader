@@ -50,7 +50,7 @@ For the reader part writing bit 0 of the Reader CSR register will trigger the IO
 PC04 / PC8E
 -----------
 
-This section describe some fact about the PC04 / PC8E combination. The interface card used in the PDP-8/E computer is the M840. The M840 combines all logic found on the M705(0), M710, M715 into one board and add omnibus interfacing. Thus the PC04 is a rather dumb device that rely on the controller do everything, including generating the stepper motor pulses for the stepper.
+This section describe some fact about the [PC04 / PC8E]( http://highgate.comm.sfu.ca/~djg/htdocs/cgi-bin/tifftopdf.cgi/maintenance/dec-8e-hmm3a-c-d-ch1-4.pdf?loc=webloc) combination. The interface card used in the PDP-8/E computer is the M840. The M840 combines all logic found on the M705(0), M710, M715 into one board and add omnibus interfacing. Thus the PC04 is a rather dumb device that rely on the controller do everything, including generating the stepper motor pulses for the stepper. This is the [mainteance manual](http://highgate.comm.sfu.ca/~djg/htdocs/cgi-bin/tifftopdf.cgi/pc04-docs/dec-00-pc0a-d.pdf?loc=webloc) for the PC04/PC04 which contain a lot of interesting information.
 
 ![PC04 schematic](http://i.imgur.com/7pdr3M1.png "PC04 schematic")
 
@@ -68,6 +68,18 @@ The original PC8E uses a M840 board to let the computer control the punch. This 
 This ciruit is incorporated in the new design.
 
 ![Test Punch sync bias](http://i.imgur.com/4ZvZMHd.png "Title")
+
+Reader timing
+
+The picture below describe the reader timing in more detail inside the M840 board.
+
+![Reader timing](http://i.imgur.com/Ik4rNR1.png)
+
+From the description in PC8E manual for the M840 board there are a number of requirements put on the reader logic:
+* When stopping it stops over a hole. I.e with FEED HOLE active.
+* If there is no READER RUN before a motor next stepper pulse, a motor 40 ms stopping sequence will be initiated. A READER RUN received during this sequence will be ignored.
+* The accelaration sequence starts at 5ms step pulse interval and accelarates to 1.667 ms over a 20 ms period
+* The FEED HOLE signal is sampled once each step pulse.
 
 Test of the punch sync signal conditioning circuit. The actual rate is not 50 cps but 54.6 cps!
 ### DL11
