@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
-
+//#define DEBUG 1
 
 int serialport_init(const char* serialport, int baud)
 {
@@ -105,9 +105,10 @@ int main (int argc, char *argv[])
   char * cmd;
   char b[1];  // read expects an array, so we give it a 1-byte array
   int i=0;
+  int state = 0;
   int timeout;
   int preamble=1;
-
+  unsigned char c;
   if (argc!=3) {
     fprintf(stderr, "wrong number of arguments. Usage CMD <serialport> <filename>\n");
     exit(1);
@@ -147,25 +148,74 @@ int main (int argc, char *argv[])
       //fprintf (stderr, "timeout=%d\n", timeout);
       continue;
     }
-    setDTR(serfd, 1);
-    usleep(1);
-    setDTR(serfd, 0);
+#ifdef DEBUG
     timeout=50;
+    if (b[0] == 'X' && state == 0) {
+      state = 1;
+    } else if (state == 1) {
+      // read first hex char
+      state = 2;
+      c = b[0]-0x30;
+      if (c>10) c -= 7;
+    } else if (state == 2 && b[0] == 'X') {
+      // only one char hex
+#endif 
+      state = 0;
+      setDTR(serfd, 1);
+      usleep(1);
+      setDTR(serfd, 0);
+      timeout=50;
     //printf("serialport_read_until: i=%d, n=%d b='%c'\n",i,n,b[0]); // debug
-    ret = write (filefd, b, 1);
-    if (ret !=1) {
-      fprintf (stderr, "Failed to write one byte to file\n");
-      exit(0);
+      ret = write (filefd, &c, 1);
+      if (ret !=1) {
+	fprintf (stderr, "Failed to write one byte to file\n");
+	exit(0);
+      }
+      //fprintf (stderr, "Wrote one byte to file\n");
+      if (b[0] == 0) {
+	reading--;
+      }
+      else {
+	preamble=0;
+	reading=350;
+      }
+#ifdef DEBUG
+    } else if (state == 2 && b[0] != 'X') {
+      // two char hex 
+      state = 3;
+      c = c << 4;
+      b[0] = b[0] - 0x30;
+      if (b[0] > 10) b[0] -= 7;
+      c |= b[0];
+      setDTR(serfd, 1);
+      usleep(1);
+      setDTR(serfd, 0);
+      timeout=50;
+    //printf("serialport_read_until: i=%d, n=%d b='%c'\n",i,n,b[0]); // debug
+      ret = write (filefd, &c, 1);
+      if (ret !=1) {
+	fprintf (stderr, "Failed to write one byte to file\n");
+	exit(0);
+      }
+      //fprintf (stderr, "Wrote one byte to file\n");
+      if (b[0] == 0) {
+	reading--;
+      }
+      else {
+	preamble=0;
+	reading=350;
+      }
+      
+    } else if (state == 3 && b[0] == 'X') {
+      // last X of a two digit hex 
+      state = 0;
+    } else if ( state == 3 && b[0] != 'X') {
+      // Oops! Invalid digit should have been an X
+      printf("ERROR");
+    } else {
+      printf("%c", b[0]);
     }
-    //fprintf (stderr, "Wrote one byte to file\n");
-    if (b[0] == 0) {
-      reading--;
-    }
-    else {
-      preamble=0;
-      reading=350;
-    }
-
+#endif
   } while( (reading>0||preamble) && timeout>0 );
 
   //tcflush(serfd, TCIOFLUSH);
