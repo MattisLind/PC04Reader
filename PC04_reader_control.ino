@@ -122,14 +122,12 @@ Mattis Lind
 #define EVENT_FEED 4
 
 #ifdef DEBUG
-#define debugPrintValue(c,i) Serial.write(c); Serial.write('X'); Serial.print(i,HEX); Serial.write(c)
+#define debugPrintValue(c,i) Serial.write(c); Serial.write('X'); Serial.print(i,HEX); Serial.write('X')
 #define debugPrint(c) Serial.write(c)
 #else
 #define debugPrint(c)
-#define debugPrinteValue(c,i)
+#define debugPrintValue(c,i)
 #endif
-
-#define debugPrintValue(c,i) Serial.write(c); Serial.write('X'); Serial.print(i,HEX); Serial.write('X')
 
 void readerFSM(int);
 
