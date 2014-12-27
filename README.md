@@ -345,31 +345,9 @@ Be sure to download all 1284 libraries from the link above. Then attach the seri
 
 #### Reader software
 
-The initialization code sets up the USART1 using serial1.begin() but then disbales the receiver so that can be used for a pin change interrupt. Configure the PCINT25 to create change interrupt.
+As of the later revisions of the firmware the reader software has been completely rewritten to allow start stop operation. That means that the it is possible to read at full speed and the stop reading and it will be possible to continue reading from next byte when ever the host wishes. In order to do so all of the reader code is completely changed. There is a more advanced state machine that understand what position the feed wheel has. It will always stop the feed with the feed hole over the reader head. 
 
-The Reader Run signal is handled by a pin change interrupt handler that detects that this pin has changed. Then it sets the reader_run variable to 2.
-
-Reader 300 cps. I.e 300 steps per second. Timer driven, one interrupt each 1.667 milisecond
-Use timer 1 to control the stepper motor. 
- 
-There need to be a slow turn on / turn off logic as well. The M940 module start
-at a 5 ms clock time and then ramps down to a 1.67 ms clock time. We will do 
-similar when starting and stopping. If reader_run or FEEDSWITCH signal the rampup variable is decremented (higher speed)
-If neither reader_run nor FEEDSWITCH is pressed the rampup variable is incremented until it reaches the MAX_RAMP value.
-
-As long as the rampup value is less than MAX_RAMP we will generated stepper motor pulses else we will stop
-
-The Power line is just to decrease the power to the motor when it is in a stopped
-state. Thus to let the motor become completely lose we need to switch all stepper
-signals to off. 
-
-Feed hole input generate an edge triggered interrupt. The ISR will the initiate a timer to 
-expire within 200 microseconds.
- 
-The timer 2 200 microseconds timeout ISR will sample the eight holes data and put them into
-a buffer and signal a semafor to the mainloop that data is available. If reader_run is greater than 0 it will be decremented. Thus if there are no reader_run pulses we will decrease the speed of the reader until we stop.
-
-Mainloop waits for the data semaphore to be active and then send the byte received over USART1.
+However the disadvantage is that hsost using USB RS232 dongles will not read continously any longer. This has to do with the slow turn around time in the USB host driver. There are ways to improve the latency but it will not be perfect which will cause the read to start and stop all the time. This is no major problem though since everythings is read in as it should.
 
 #### Punch software
 
