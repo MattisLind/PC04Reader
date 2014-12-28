@@ -163,6 +163,12 @@ The difference is as far as I can see that the PC11 can signal errors in th high
 
 Aside from the Error indication the hypothesis is that system software would think that a DL11 at CSR 176550 is a in fact a PC11 device!
 
+And yes it does! Aside from the fact that it is not detecting the end of the tape other than there is no more data coming it will successfully both read and write paper tapes udner the RSX11M operating system when connected to a DLV11-F card.
+
+![Running FLX in RSX11M](http://i.imgur.com/UWvIvaJ.png)
+
+I suppose that the inability to cause an error condition at end of tape causes the error message from FLX.
+
 Implementation
 --------------
 
