@@ -169,6 +169,12 @@ And yes it does! Aside from the fact that it is not detecting the end of the tap
 
 I suppose that the inability to cause an error condition at end of tape causes the error message from FLX.
 
+Possible modifications to the DLV11-F to allow for paper out error:
+![DLV11-F modifictaions](http://i.imgur.com/UPWZpWg.png)
+
+Add a input paper error signal at pin 3 of R32 instead of ground.
+
+
 Implementation
 --------------
 
