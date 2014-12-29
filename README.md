@@ -178,9 +178,15 @@ Possible modifications to the DLV11-F to allow for paper out error:
 
 Add a input paper error signal at pin 3 of E32 instead of ground.
 
-Punch paper-out is a switch which is closed when paper out condition occur. It is connected to alot B2, pin E and T. Pin T is connected to slot B1 while E is unconnected on my unit.
+Punch paper-out is a switch which is closed when paper out condition occur. It is connected to alot B2, pin E and T. Pin T is connected to slot B1 while E is unconnected on my unit. B1E is wired to ground level. On the reader/punch board the T signal is connected to pin 19. This pin is configured as an open-drain output with pull-up. Thus an wire-or function will result. The output is driven low when the punch is off-line. I.e. there are no pulses coming from the punch-sync signal for more than 18 ms. The combined signal at pin 19 is then the PUNCH ERROR signal which is active low. It will be active when paper is out, punch not running or punch/reader out of power.
 
-The on-switch is connected to pin B of A1. It is +5V when on-line and floating when off-line.
+The on-switch is connected to pin B of A1. It is +5V when on-line and floating when off-line. This signal is connected to pin 20 and wire-ored with an internal signal output on this pin. The pin is configured as open-drain output with a internal pullup. The internal paper out signal is sent to this pin as an active low signal and wire-ored with the on-line switch signal. The resulting signal, READER ERROR is active low and active when paper is out in reader, reader off-line or power off.
+
+
+Synthezise clock signal
+-----------------------
+
+Pin 21 is used as an output for a clock signal used by the transmitter in the host. It is synthezised as a signal with a frequency 320 times the frequency of the punch sync signal. Thereby there is no need for special crystals and there will be no buffering over-run in the punch logic. The clocg generator is made using timer 0 in the atmega chip. When the punch is off-line and no punch sync is generated the signal is fixed at 54.6 * 320 Hz. Each timeout interrupt of the timer 0 will toggle pin 21. The timeout routine will increase an internal variable. The pucnh sync interrupt will check this variable at each interrupt. If the value is higher than 320 it will lower the timeout value for timer 0 and if it is higher it will increase the value so that clock signal will be locked to the punch sync signal.
 
 
 
