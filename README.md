@@ -199,6 +199,34 @@ I decided to go for a simple all TTL interface using some of the unused signal i
 
 Then there are a couple of modifictions to be done to the M7800 (DL11) and M7940 (DLV11) boards to allow external clock while simulatenously generating an internal receiver clock, being able to convey the punch error and reader error signals to the bus and to generate interrupts based on punch error and reader error.
 
+The DL11 already support to use external clock. It is just a matter of setting the TX clock roatry switch to position 9. Then it will use the clock signal supåplied on pin CC. 
+
+To support READER ERROR the active low signal is received by a 7404 inverting buffer which has to be added to the board and then forwarded to pin 12 of E01 bus driver.
+
+![DL11 Reader Error](http://i.imgur.com/6nnOz00.png)
+
+For PUNCH ERROR the active low signal is likewise buffered in a 7404 inverting buffer and the forwarded to pin 8 on E02 bus driver. Pin 8 is already in use. The signals to pins 8 and 9 has to be cut off. The DL-5 XCSR TO BUS is connected fro E11 pin 9 to E02 pin 9.
+
+![DL11 Punch Error](http://i.imgur.com/ntVVSQh.png)
+
+The existing RCVR INT H signal is intercepted before arriving to pin 1 of E52 and pin 2 of E58. This signal is OR:ed together in a 7432 chip that is added to the board with the READER ERROR signal output from the 7404 inverting buffer. The output of the OR gate is connected to pin 1 of E52 and pin 2 of E58.
+
+The same procedure takes place for the PUNCH ERROR signal, intercepting XMIT INT H signal before it arrives at E57 pin 1 and E58 pin 5. This signal is connected to another 7432 OR-gate together with the PUNCH ERROR signal from the 7404 inverting buffer.
+
+![DL11 interrupts](http://i.imgur.com/sL98qqX.png)
+
+
+For the DLV11 board the input clock signal to the UART has to be cut off. The UART pin 40 is wired to 40 pin connector pin N.
+
+![DL11 interrupts](http://i.imgur.com/KyJr2B6.png)
+
+The READER ERROR signal at pin D is feed via a 7404 inverting buffer chip to pin 14 of E30. The current signal is cut off. The PUNCH ERROR signal at pin L is feed via a 7404 inverting buffer to pin 13 of E30. This pin is currently grounded. Cut it off.
+
+![DL11 interrupts](http://i.imgur.com/ge2Ue6n.png)
+
+The active high READER ERROR and PUNCH ERROR signals from the outputs of the 7404 inverting buffer is feed into one each 7432 OR-gate. The other input to this OR-gate is the signal going to E32 pin 9 and 12. This signals need to be intercepted.
+
+![DL11 interrupts](http://i.imgur.com/umuGUcl.png)
 
 
 
