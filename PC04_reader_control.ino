@@ -23,7 +23,7 @@ Mattis Lind
  35                29             Hole 6 detector             In                K
  34                30             Hole 7 detector             In                L
  33                31             Hole 8 detector             In                M
- 
+ 15                 9             Reader on line switch       Out               B
                                   Ground                      GND               C
                                   +5V                                           A
                     
@@ -85,9 +85,11 @@ Mattis Lind
 #define FEEDSWITCH      6  // active low
 #define PUNCH_FEED      7
 #define FEEDHOLE        2
-#define TEST_OUT       15
+#define READER_ERROR   13    // PORTD PD5
+#define PUNCH_ERROR     9    // PORTD PD1
 #define PUNCH_DONE     12
 #define READER_RUN     14
+#define PUNCH_CLK      15    
 #define TIMER1_VALUE_1_6MS  65119   // preload timer1 65536-16MHz/1/600Hz
 #define TIMER1_VALUE_2MS   65036        // preload timer1 65536-16000000/64/500Hz
 #define TIMER1_VALUE_3MS   64785    // prelaod timer1 65536-16000000/64/333Hz
@@ -96,7 +98,7 @@ Mattis Lind
 #define NUM_TIMER1_STEPPING_VALUES 27 
 //#define TIMER2_VALUE  206    // 256 - 16000000/64*200E-6
 #define TIMER2_VALUE  243    // 256 - 16000000/64*50E-6
-
+#define TIMER0_NOMINAL_VALUE 142 // 256 - 16000000/8/17472
 #define TIMER3_VALUE  45536   // preload timer3 65536-16MHz/8/100Hz)
 #define RUN 0
 #define STOPPING 1
@@ -142,6 +144,7 @@ volatile int feedStopping;
 volatile int feedHole;
 volatile int readerState;
 volatile int feed = 0;
+volatile int edgeInterruptActive=0;
 
 void setup ()
 {
@@ -205,6 +208,23 @@ void setup ()
   TIMSK1 = 0;
   readerState = STATE_IDLE;
   readerFSM(EVENT_INIT);
+  
+  DDRD |= (1 << DDD1);    // Reader Error active at startup
+  PORTD &= ~(1 << PORTD1);
+  
+  DDRD |= (1 << DDD5);   // Punch Error active at startup
+  PORTD &= ~(1 << PORTD5);
+  
+  pinMode (PUNCH_CLK, OUTPUT);
+   // Init Timer 0
+   
+  TIMSK0 |= (1<<TOIE0);
+  TIFR0  |= (1 << TOV0);
+  TCCR0A = 0;
+  TCCR0B |= (1 << CS01);
+  TCNT0 = TIMER0_NOMINAL_VALUE;
+  EIFR |= (1 << INTF2);
+  EIMSK |= (1 << INT2);     // Enable external interrupt INT2 
   interrupts();             // enable all interrupts
 
 }
@@ -267,14 +287,18 @@ ISR(TIMER2_OVF_vect) {
 // Edge triggered feed hole interrupt routine - detect if not empty
 void extInt () {  
   notEmpty = 6; 
-  EIFR |= (1 << INTF2);
-  EIMSK &= ~(1 << INT2);     // Disable external interrupt INT2 untill timeout has occured
+  DDRD &= ~(1 << DDD1);   // READER ERROR INACTIVE
+  //EIFR |= (1 << INTF2);
+  //EIMSK &= ~(1 << INT2);     // Disable external interrupt INT2 untill timeout has occured
   sei();
-  TIFR2 |= (1<<TOV2);         // clear pending interrupts
-  TCNT2 = TIMER2_VALUE;      // Set Timer 2 to the 200 micro second timeout  
-  TIMSK2 |= (1 << TOIE2);    // now enable timer 2 interrupt  
+  if (edgeInterruptActive) {
+    edgeInterruptActive=0;
+    TIFR2 |= (1<<TOV2);         // clear pending interrupts
+    TCNT2 = TIMER2_VALUE;      // Set Timer 2 to the 200 micro second timeout  
+    TIMSK2 |= (1 << TOIE2);    // now enable timer 2 interrupt  
                              // filtering out spurious interrupts  
   debugPrint('D');  
+  }
 }
 
 
@@ -435,8 +459,9 @@ void readerFSM (int event) {
         readerState = STATE_RUNNING_2;
         if (timeoutIndex) timeoutIndex--;
         TCNT1 = steppingIntervals[timeoutIndex];                  // Set timeout value for generating pulses
-        EIFR |= (1 << INTF2);
-        EIMSK |= (1 << INT2);                                     // Re-enable external interrupt INT2
+        //EIFR |= (1 << INTF2);
+        //EIMSK |= (1 << INT2);                                     // Re-enable external interrupt INT2
+        edgeInterruptActive=1;
         sei();
         step(2);
         debugPrint('R');
@@ -488,8 +513,9 @@ void readerFSM (int event) {
         readerState = STATE_RUNNING_4;
         if (timeoutIndex) timeoutIndex--;
         TCNT1 = steppingIntervals[timeoutIndex];                  // Set timeout value for generating pulses
-        EIFR |= (1 << INTF2);
-        EIMSK |= (1 << INT2);                                     // Re-enable external interrupt INT2
+        //EIFR |= (1 << INTF2);
+        //EIMSK |= (1 << INT2);                                     // Re-enable external interrupt INT2
+        edgeInterruptActive=1;
         sei();
         step(4);
         debugPrint('Z');
@@ -536,10 +562,31 @@ void readerFSM (int event) {
 ISR (TIMER1_OVF_vect) {
   //sei();
   notEmpty--;
+  if (!notEmpty) {
+    DDRD |= (1 << DDD1);   // READER ERROR ACTIVE
+  }
   readerFSM (EVENT_CLOCK);
 }
 
-void punchInt () {   
+volatile int punchReady = 0;
+volatile int punchClockCount=0;
+volatile int timer0Value = TIMER0_NOMINAL_VALUE;
+
+
+void punchInt () { 
+  if (punchClockCount > 320) {
+    timer0Value--;
+  }
+  else {
+    timer0Value++;
+  }
+  UBRR1 = ((256-timer0Value)<<4)+1;
+  punchClockCount=0;
+  if (punchReady == 1) {
+    // ready!
+     DDRD &= ~(1 << DDD5);   // disable output - three state
+  }
+  punchReady=0;
   if (Serial.available()) { 
     PORTC = Serial.read();    // Output the byte from the buffer.
     digitalWrite(PUNCH_DONE,1); // switch on feed hole and move forward solenoid
@@ -555,15 +602,33 @@ void punchInt () {
 
 // The TIMER 3 ISR that switches the punch solenoids off.
 ISR (TIMER3_OVF_vect) {
+  punchReady++;
+  if (punchReady > 1) {
+    // not ready
+     DDRD |= (1 << DDD5);   // Enable output
+  }
   PORTC = 0x00;          // switch off solenoids
   digitalWrite(PUNCH_DONE,0); // switch off feed hole and move forward solenoid
-  TIMSK3 &= ~(1<<TOIE3); // Disable timer 3 interrupts
+  TCNT3 = TIMER3_VALUE; // reset the timer value for the 10 ms timout
+  //TIMSK3 &= ~(1<<TOIE3); // Disable timer 3 interrupts
   EIMSK |= (1 << INT0);  // enable punch sync interrupts
 }
 
+volatile int state=0;
+
+
+ISR (TIMER0_OVF_vect) {
+  digitalWrite(PUNCH_CLK,state);
+  state = ~state; 
+  TCNT0= timer0Value;
+  punchClockCount++;
+}  
+
 void loop () {
+#ifdef DEBUG  
   debugPrint('-');
   delay(5);
+#endif
 }
 
 
