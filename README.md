@@ -276,7 +276,7 @@ Punch cable
                       GND                                            B
     16                Punch Sync                   In                C  - need leveling circuit see below
                       GND                                            D
-    18                Punch Done                  Out                E
+    18                Punch Done                  Out                M
     29                Hole 8                      Out                H
     28                Hole 7                      Out                J
     27                Hole 6                      Out                K
@@ -289,7 +289,7 @@ Punch cable
     19                Out of tape                 In                 T
     
 
-This is the [schematic as a PDF](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC04-controller.pdf) and elow is a jpeg.
+This is the [schematic as a PDF](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC04-controller.pdf) and below is a jpeg.
 
 ![Schematic](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC04-controller.jpg "schematic")
 
