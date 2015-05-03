@@ -293,6 +293,8 @@ This is the [schematic as a PDF](https://dl.dropboxusercontent.com/u/96935524/Da
 
 ![Schematic](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC04-controller.jpg "schematic")
 
+After scanning and updating the page I found that I missed the supply voltages and some decoupling capacitors. AA is supposed be +5V and AC is ground. There is two 100nF decoupling capacitors and one 22uF (or similar) tantalum capacitor which is not shown in the schematic.
+
 #### Gerber files
 
 ![PCB layout](http://i.imgur.com/TbeRUjJ.png "PCB layout")
