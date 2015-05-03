@@ -289,6 +289,9 @@ Punch cable
     19                Out of tape                 In                 T
     
 
+This is the [schematic as a PDF](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC04-controller.pdf) and elow is a jpeg.
+
+![Schematic](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC04-controller.jpg "schematic")
 
 #### Gerber files
 
