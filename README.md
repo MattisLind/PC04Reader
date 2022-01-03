@@ -42,7 +42,7 @@ The intention is to use a AtMega1284p chip.
 PC05 / PC11
 -----------
 
-This is the target emulation. This is the [PC11 Engieering Drawing](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC11_Engineering_Darwings.pdf) and this is the [PC11 manual](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC11_Reader-Punch_Manual.pdf). The interface card is the M7810 board which is a very simple unibus interface. The PC05 on the other hand compared with the PC04 include all logic to control the reader and punch. The small backplane in the PC04 has been expanded in the PC05 to twelve slots and three cards is loctated here: M7050, M710 and M715. One interesting note is that the PDP-8/I and PDP-8/L (and I assume also PDP-12 and PDP-15) uses these cards as well, but located in the CPU. (Well not M7050, but M705). This means that the interface the PC05 reader a device address and three IOP signals, IOP1, IOP2 and IOP4. For the reader the IOP1 is used to test the reader flag. IOP2 is used to transfer data from the reader to host and IOP4 is to initiate reading of the next character. For the punch IOP1 is used test the punch done flag, IOP2 to clear the punch done flag and IOP4 to move a byte from host to punch.
+This is the target emulation. This is the [PC11 Engieering Drawing](http://storage.datormuseum.se/u/96935524/Datormusuem/PC11_Engineering_Darwings.pdf) and this is the [PC11 manual](http://storage.datormuseum.se/u/96935524/Datormusuem/PC11_Reader-Punch_Manual.pdf). The interface card is the M7810 board which is a very simple unibus interface. The PC05 on the other hand compared with the PC04 include all logic to control the reader and punch. The small backplane in the PC04 has been expanded in the PC05 to twelve slots and three cards is loctated here: M7050, M710 and M715. One interesting note is that the PDP-8/I and PDP-8/L (and I assume also PDP-12 and PDP-15) uses these cards as well, but located in the CPU. (Well not M7050, but M705). This means that the interface the PC05 reader a device address and three IOP signals, IOP1, IOP2 and IOP4. For the reader the IOP1 is used to test the reader flag. IOP2 is used to transfer data from the reader to host and IOP4 is to initiate reading of the next character. For the punch IOP1 is used test the punch done flag, IOP2 to clear the punch done flag and IOP4 to move a byte from host to punch.
 
 For the reader part writing bit 0 of the Reader CSR register will trigger the IOP4 pulse of the reader in the M7050, initiating a read cycle. 
 
@@ -64,7 +64,7 @@ The solenoid driver drive the punch solenoids when the inputs are high.  Thus to
 
 The original PC8E uses a M840 board to let the computer control the punch. This uses this circuit to bias the punch sync coil in the punch.
 
-![Punch sync bias circuit](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/Sk%C3%A4rmavbild%202014-07-18%20kl.%2007.55.17.png "Title") 
+![Punch sync bias circuit](http://storage.datormuseum.se/u/96935524/Datormusuem/Sk%C3%A4rmavbild%202014-07-18%20kl.%2007.55.17.png "Title") 
 
 This ciruit is incorporated in the new design.
 
@@ -85,7 +85,7 @@ From the description in PC8E manual for the M840 board there are a number of req
 Test of the punch sync signal conditioning circuit. The actual rate is not 50 cps but 54.6 cps!
 ### DL11
 
-The [DL11](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DL11%20Asynchronous%20Line%20Interface%20Engineering%20Drawings.pdf) Asynchronous Line interface is implemented by DEC on a M7800 circuit board. It is using a standard UART circuit and a number of circuits nu adapt to the unibus and to both EIA RS-232 / CCITT V.28 levels and 20 mA current loop. [DL11 manual](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/DEC-11-HDLAA-B-D%20DL11%20Asynchronous%20Line%20Interface%20Manual.pdf).
+The [DL11](http://storage.datormuseum.se/u/96935524/Datormusuem/DL11%20Asynchronous%20Line%20Interface%20Engineering%20Drawings.pdf) Asynchronous Line interface is implemented by DEC on a M7800 circuit board. It is using a standard UART circuit and a number of circuits nu adapt to the unibus and to both EIA RS-232 / CCITT V.28 levels and 20 mA current loop. [DL11 manual](http://storage.datormuseum.se/u/96935524/Datormusuem/DEC-11-HDLAA-B-D%20DL11%20Asynchronous%20Line%20Interface%20Manual.pdf).
 
 The DL11 has a baud rate generator that can generate independet clock signals for the Rx and Tx section of the UART chip. 8 different buad rates are selectable using two rotary switches. The crystal to the baud rate generator can be replaced. 
 
@@ -289,9 +289,9 @@ Punch cable
     19                Out of tape                 In                 T
     
 
-This is the [schematic as a PDF](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC04-controller.pdf) and below is a jpeg.
+This is the [schematic as a PDF](http://storage.datormuseum.se/u/96935524/Datormusuem/PC04-controller.pdf) and below is a jpeg.
 
-![Schematic](https://dl.dropboxusercontent.com/u/96935524/Datormusuem/PC04-controller.jpg "schematic")
+![Schematic](http://storage.datormuseum.se/u/96935524/Datormusuem/PC04-controller.jpg "schematic")
 
 After scanning and updating the page I found that I missed the supply voltages and some decoupling capacitors. AA is supposed be +5V and AC is ground. There is two 100nF decoupling capacitors and one 22uF (or similar) tantalum capacitor which is not shown in the schematic.
 
