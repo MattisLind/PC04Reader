@@ -419,6 +419,8 @@ Arduino pin indicate the pin on the Arduino board to connect to when programming
 
 I used another Arduino board wich I connect to J2 to download the bootloader. Basically I use the instructions from this [blogpost](http://maniacbug.wordpress.com/2011/11/27/arduino-on-atmega1284p-4/). The pinout of J2 is the same as the pinout of J2 in the blog post.
 
+If you experience trouble burning the bootloader, avrdude reporting that the signature is not what was expected, this is likely duevto two dufferent versions of the 1284 chip, the 1284 and the 1284p. The boards.txt file now has 1284p configured. Change to 1284 to program older chips. 
+
 #### Download software
 
 Be sure to download all 1284 libraries from the link above. Then attach the serial device to J1. The pinout is the same as JP1 in the blog post above. Make sure that the jumper closest to the CPU is removed while trying to brogram, otherwise the Rx signals will collide and the chip won't download.
