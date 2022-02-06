@@ -421,6 +421,18 @@ I used another Arduino board wich I connect to J2 to download the bootloader. Ba
 
 If you experience trouble burning the bootloader, avrdude reporting that the signature is not what was expected, this is likely due to two different versions of the 1284 chip, the 1284 and the 1284p. The boards.txt file now has 1284p configured. Change to 1284 to program older chips. 
 
+Also make sure to change the boot loader so that it reports the right sinature. Since it has to be compiled and I didn't have the proper environment I simply patched the HEX-file.
+
+Change:
+
+```
+:10FD700085E080CF813511F488E018D01DD080E176
+```
+To:
+```
+:10FD700086E080CF813511F488E018D01DD080E175
+```
+
 #### Download software
 
 Be sure to download all 1284 libraries from the link above. Then attach the serial device to J1. The pinout is the same as JP1 in the blog post above. Make sure that the jumper closest to the CPU is removed while trying to brogram, otherwise the Rx signals will collide and the chip won't download.
