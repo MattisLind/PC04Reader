@@ -64,7 +64,7 @@ The solenoid driver drive the punch solenoids when the inputs are high.  Thus to
 
 The original PC8E uses a M840 board to let the computer control the punch. This uses this circuit to bias the punch sync coil in the punch.
 
-![Punch sync bias circuit](http://storage.datormuseum.se/u/96935524/Datormusuem/Sk%C3%A4rmavbild%202014-07-18%20kl.%2007.55.17.png "Title") 
+![Punch sync bias circuit](http://storage.datormuseum.se/u/96935524/Datormusuem/Ska%cc%88rmavbild%202014-07-18%20kl.%2007.55.17.png) 
 
 This ciruit is incorporated in the new design.
 
