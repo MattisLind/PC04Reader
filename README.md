@@ -2,7 +2,7 @@ PC04 Reader / Punch control
 ==========
 
 
-This project started by using a Arduino board to control the reader part of a PC04 paper tape reader . I have made a small [webpage](http://www.datormuseum.se/reading-paper-tapes) on this.
+This project started by using a Arduino board to control the reader part of a PC04 paper tape reader . I have made a small [webpage](http://www.datormuseum.se/reading-paper-tapes.html) on this.
 
 Now this project has been extended to be able to both control the reader and punch of the DEC PC04. The idea behind this came from the fact that the bootstrap for the high speed and low speed paper tape is the same. The only difference is the CSR used. Thus my idea is to emulate the PC11 using a DL11 card. Another reason is that I have several PC04 but no PC05. Neither do I have any M7810 boards. 
 
