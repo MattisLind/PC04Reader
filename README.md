@@ -51,7 +51,7 @@ For the reader part writing bit 0 of the Reader CSR register will trigger the IO
 PC04 / PC8E
 -----------
 
-This section describe some fact about the [PC04 / PC8E]( http://highgate.comm.sfu.ca/~djg/htdocs/cgi-bin/tifftopdf.cgi/maintenance/dec-8e-hmm3a-c-d-ch1-4.pdf?loc=webloc) combination. The interface card used in the PDP-8/E computer is the M840. The M840 combines all logic found on the M705(0), M710, M715 into one board and add omnibus interfacing. Thus the PC04 is a rather dumb device that rely on the controller do everything, including generating the stepper motor pulses for the stepper. This is the [mainteance manual](http://highgate.comm.sfu.ca/~djg/htdocs/cgi-bin/tifftopdf.cgi/pc04-docs/dec-00-pc0a-d.pdf?loc=webloc) for the PC04/PC04 which contain a lot of interesting information.
+This section describe some fact about the [PC04 / PC8E](http://www.bitsavers.org/pdf/dec/pdp8/pdp8e/DEC-8E-HMM3A-C-D_PDP-8e_Maintenance_Manual_Volume_3_External_Bus_Options_Jul73.pdf) combination. The interface card used in the PDP-8/E computer is the M840. The M840 combines all logic found on the M705(0), M710, M715 into one board and add omnibus interfacing. Thus the PC04 is a rather dumb device that rely on the controller do everything, including generating the stepper motor pulses for the stepper. This is the [mainteance manual](https://bitsavers.org/pdf/dec/papertape/DEC-00-PC0A-D_PC04_Manual.pdf) for the PC04/PC04 which contain a lot of interesting information.
 
 ![PC04 schematic](http://i.imgur.com/7pdr3M1.png "PC04 schematic")
 
